@@ -1,0 +1,530 @@
+==============================================================================
+ gamepad_reader.py  --  EXPLAINED FOR LEARNING
+==============================================================================
+
+Line numbers below match the file gamepad_reader.py exactly.
+I skip the basics (print, while loops, if/elif, etc.) and focus on the things
+that are new or confusing.
+
+
+------------------------------------------------------------------------------
+ PART 0: THE BIG IDEA (read this first)
+------------------------------------------------------------------------------
+
+Linux treats every input device (keyboard, mouse, gamepad) as a "file" that
+sends a stream of small messages called EVENTS. Every time something happens
+(a key goes down, a stick moves) the device sends one event.
+
+Our virtual gamepad (made by ps4_keyboard.py) is just another device in that
+system. gamepad_reader.py does this:
+
+   1. Finds the gamepad among all the devices.
+   2. Listens to its events in the background.
+   3. Turns those events into a list of 25 numbers (0 or 1) called "keys".
+   4. Every 100 ms it prints that list.
+
+There are two kinds of inputs, and they are treated differently:
+
+   HOLDABLE   -> the number is 1 for as long as you hold the key.
+   ONE-SHOT   -> the number is 1 for ONE refresh only, then back to 0,
+                 even if you keep holding the key.
+
+Everything in the code serves one of those two ideas.
+
+
+------------------------------------------------------------------------------
+ PART 1: WHAT IS AN EVENT? (ev.type, ev.code, ev.value)
+------------------------------------------------------------------------------
+
+Every event has exactly three pieces of information. In the code the event is
+stored in a variable called "ev" (short for "event"). You can name it anything,
+"ev" is just a common short name.
+
+   ev.type   = WHAT KIND of thing happened
+   ev.code   = WHICH button / axis it was
+   ev.value  = WHAT its new value is
+
+Example 1: you press the Z key (Cross button)
+   ev.type  = EV_KEY       (a button changed)
+   ev.code  = BTN_SOUTH    (the Cross button)
+   ev.value = 1            (1 = pressed, 0 = released, 2 = auto-repeat)
+
+Example 2: you push the left stick all the way to the right (D key)
+   ev.type  = EV_ABS       (an axis changed; ABS = "absolute position")
+   ev.code  = ABS_X        (the left stick's horizontal axis)
+   ev.value = 255          (axis goes from 0 to 255)
+
+The two types we care about:
+
+   EV_KEY  = buttons. Value is 0 (up) or 1 (down).
+   EV_ABS  = axes (sticks, triggers, D-pad). Value is a number in a range.
+
+WHY IS THE D-PAD AN "AXIS"?
+   On a real gamepad the D-pad is reported as a "hat". Hat axes only have 3
+   values: -1, 0 and 1.
+      ABS_HAT0X:  -1 = left,  0 = centered,  1 = right
+      ABS_HAT0Y:  -1 = up,    0 = centered,  1 = down
+
+AXIS RANGES USED BY OUR GAMEPAD
+   Sticks:    0 to 255, centered at 128.
+              0   = pushed fully left (or up)
+              255 = pushed fully right (or down)
+   Triggers:  0 to 255.  0 = not pressed, 255 = fully pressed.
+
+   Notice that for sticks "up" is the LOW number and "down" is the HIGH number.
+   That is how gamepads (and screens) work: the top is 0.
+
+
+------------------------------------------------------------------------------
+ PART 2: LINE-BY-LINE EXPLANATION
+------------------------------------------------------------------------------
+
+LINE 1:   #!/usr/bin/env python3
+   Called a "shebang". It tells Linux "run this file using python3" if you
+   execute it directly. It starts with # so Python treats it as a comment.
+   You can delete it and everything still works with "python3 gamepad_reader.py".
+
+LINES 2-19:   """ ... """
+   A triple-quoted string at the top of a file is called a DOCSTRING.
+   It is documentation: Python ignores it when running. It is only for humans.
+
+LINE 21:   import sys
+   "sys" is a built-in Python module with system-related tools.
+   We use it in ONE place: sys.exit(1) (line 99), which quits the program.
+   The 1 means "quit with an error" (0 would mean "quit normally").
+
+LINE 22:   import threading
+   Gives us THREADS. A thread is a second "worker" running inside your program
+   at the same time as the main part. Explained in detail in PART 3.
+
+LINE 23:   import time
+   Gives us time-related tools. We use time.sleep(0.1) on line 112 to pause
+   for 0.1 seconds (100 ms).
+
+LINE 25:   from evdev import InputDevice, list_devices, ecodes as e
+   "evdev" is a Python library (installed earlier with: sudo apt install
+   python3-evdev). It lets Python talk to Linux's input events (PART 1).
+   From it we take three things:
+
+      InputDevice   a class that represents ONE input device (like our gamepad).
+                    We give it a device path and we get an object we can read
+                    events from.
+
+      list_devices  a function that returns the paths of ALL input devices,
+                    like ['/dev/input/event0', '/dev/input/event1', ...].
+
+      ecodes as e   "ecodes" is a collection of constants (named numbers) for
+                    every event type, key, button and axis. For example
+                    ecodes.BTN_SOUTH is really just a number (304), but the
+                    name is much easier to read.
+
+                    "as e" gives it the short nickname "e". So instead of
+                    writing ecodes.BTN_SOUTH everywhere, we write e.BTN_SOUTH.
+                    That is ALL "e" is. It is not an event. It is the
+                    nickname for the code table.
+
+                    !! Do not confuse:  e   = the code table (constants)
+                                        ev  = one single event we received
+
+LINE 27:   keys = [0] * 25
+   Creates a list of 25 zeros: [0, 0, 0, ... 0].
+   "[0] * 25" means "repeat the list [0] 25 times".
+   This is THE array you asked for. Position (index) 0 is R2, 1 is L2, etc.
+   Python counts from 0, so the 25 items are indexes 0 to 24.
+   It is at the top level of the file (not inside a function) so every
+   function can read and change it. This is called a GLOBAL variable.
+
+LINES 30-42:   ONE_SHOT = { e.BTN_SOUTH: 14, ... }
+   This is a DICTIONARY. A dictionary connects a "key" to a "value":
+        { thing_you_look_up : what_you_get_back }
+   Here: gamepad button  ->  its position in the keys array.
+        e.BTN_SOUTH: 14    means "Cross button goes to keys[14]".
+
+   Names of the button constants (they follow the PlayStation layout that
+   Linux uses):
+        BTN_SOUTH  = Cross       BTN_TL     = L1       BTN_MODE   = PS button
+        BTN_EAST   = Circle      BTN_TR     = R1       BTN_THUMBL = L3 (stick click)
+        BTN_NORTH  = Triangle    BTN_SELECT = Share    BTN_THUMBR = R3 (stick click)
+        BTN_WEST   = Square      BTN_START  = Options
+
+   (SOUTH/EAST/NORTH/WEST are the physical positions: bottom, right, top, left.)
+
+   The name ONE_SHOT is written in CAPITALS by convention: it means "this is a
+   constant, it never changes while the program runs".
+
+   Why do the D-pad up/down not appear here? Because they come as AXIS events
+   (EV_ABS), not button events. They are handled separately in lines 65-71.
+
+LINE 44:   pending = set()
+   A SET is like a list, but:
+      - it has no duplicates (adding 14 twice still leaves one 14)
+      - it has no order
+      - checking "is X in the set?" is very fast
+   "pending" holds the INDEXES of one-shot buttons that were pressed but that
+   we have not yet reported in the array. Example: pending = {14, 18} means
+   "Cross and L1 were pressed since the last refresh".
+   Why is this needed? See PART 4.
+
+LINE 45:   lock = threading.Lock()
+   Creates a LOCK. It is a safety tool for threads. Explained in PART 3.
+
+LINES 48-53:   def find_gamepad():
+   Searches all devices and returns the one called "Wireless Controller"
+   (the name we gave our virtual gamepad in ps4_keyboard.py).
+
+   LINE 49:  for path in list_devices():
+       Goes through every device path on the system.
+
+   LINE 50:  dev = InputDevice(path)
+       Opens that device, creating an object called "dev".
+
+   LINE 51:  if dev.name == "Wireless Controller":
+       Every device has a .name. If it matches, we found our gamepad.
+
+   LINE 52:  return dev
+       Hands the device back to whoever called the function and stops.
+
+   LINE 53:  return None
+       If the loop finished without finding it, return "None" (Python's word
+       for "nothing"). The caller checks for that on line 97.
+
+LINES 56-83:   def update(code, value):
+   This function receives ONE axis event's code and value and updates the
+   holdable part of the keys array.
+
+   Parameters:  code  = which axis (ABS_X, ABS_Z, ...)
+                value = its current number
+
+   LINE 58-59:
+       if code == e.ABS_RZ:
+           keys[0] = int(value > 128)
+
+   Two ideas here:
+
+   (a) "value > 128" is a comparison. It gives True or False.
+   (b) "int(True)" is 1 and "int(False)" is 0. So int(value > 128) converts
+       the answer into the 0/1 we want. It is a short way of writing:
+            if value > 128: keys[0] = 1
+            else:           keys[0] = 0
+
+   WHY 128? The trigger goes 0..255. We say "pressed" when it is more than
+   halfway. In our program a key press sends 255 and a release sends 0, so
+   any threshold works; halfway is the natural choice.
+
+   WHY IS R2 = ABS_RZ AND L2 = ABS_Z?
+   Because that is how a PS4 controller's axes are laid out on modern Linux:
+        ABS_Z  = L2 trigger        ABS_RZ = R2 trigger
+        ABS_X, ABS_Y   = left stick
+        ABS_RX, ABS_RY = right stick
+   (This is the exact fix we made earlier when L2/R2 and the right stick were
+   swapped.) ps4_keyboard.py sends them on those axes and this reader listens
+   on the same ones.
+
+   LINES 62-64:  D-pad right/left (HOLDABLE)
+       keys[2] = int(value == 1)      # right
+       keys[3] = int(value == -1)     # left
+   "==" means "is equal to". With hat axis ABS_HAT0X:
+        value 1  -> keys[2]=1, keys[3]=0   (right held)
+        value -1 -> keys[2]=0, keys[3]=1   (left held)
+        value 0  -> both 0                 (released)
+   This is why the D-pad holds: when released, the axis sends 0 and both
+   entries are rewritten to 0 automatically.
+
+   LINES 65-71:  D-pad up/down (ONE-SHOT)
+       elif code == e.ABS_HAT0Y:
+           if value == -1:
+               with lock:
+                   pending.add(12)
+   Same hat idea but on the vertical axis. Instead of writing straight into
+   keys, we put the index (12 = up, 13 = down) into "pending" so it follows the
+   one-shot rules (PART 4). "with lock:" is explained in PART 3.
+
+   LINES 72-77:  Left stick
+       elif code == e.ABS_Y:
+           keys[4] = int(value < 64)      # up
+           keys[5] = int(value > 192)     # down
+   The stick range is 0..255 with the center at 128. We split it in three zones:
+        0 ......... 63 | 64 ....... 192 | 193 ....... 255
+        "low" (up/left)   dead zone       "high" (down/right)
+   Inside the middle zone (64-192) both entries stay 0, so a stick that is
+   resting near the center is not counted as a press. 64 and 192 are the
+   limits: one quarter and three quarters of 255.
+   Both keys[4] and keys[5] are rewritten on every event, so when the stick
+   returns to the center both become 0.
+
+   The right stick (lines 78-83) is the same idea using ABS_RY and ABS_RX.
+
+   Axis map to remember:
+        ABS_X  = left stick left/right      ABS_RX = right stick left/right
+        ABS_Y  = left stick up/down         ABS_RY = right stick up/down
+
+LINES 86-92:   def read_gamepad(pad):
+   This function is the one that runs in the BACKGROUND THREAD (PART 3).
+   It listens to the gamepad forever and handles each event.
+
+   LINE 87:  for ev in pad.read_loop():
+       "pad.read_loop()" is a never-ending loop provided by evdev. It WAITS
+       (it blocks) until the gamepad sends an event, hands it to us as "ev",
+       and then waits for the next one. It does not use CPU while waiting.
+       This is the line that actually receives the gamepad's events.
+
+   LINE 88:  if ev.type == e.EV_ABS:
+       If the event is an axis event (stick / trigger / D-pad), hand it to
+       update() which we explained above.
+
+   LINE 90:  elif ev.type == e.EV_KEY and ev.value == 1 and ev.code in ONE_SHOT:
+       Three conditions joined by "and" (ALL must be true):
+         1. ev.type == e.EV_KEY   -> it is a button event
+         2. ev.value == 1         -> it is a PRESS (not a release)
+         3. ev.code in ONE_SHOT   -> it is one of the buttons we track
+                                     ("in" checks if the code is a key in the
+                                     dictionary)
+       Checking value == 1 is what makes it a "one press" signal: we ignore the
+       release (0) and the auto-repeat (2).
+
+   LINES 91-92:
+       with lock:
+           pending.add(ONE_SHOT[ev.code])
+       "ONE_SHOT[ev.code]" looks up the button in the dictionary and gives us
+       its index. Example: ev.code = BTN_SOUTH -> 14. We then add 14 to
+       "pending".
+
+LINES 95-114:   def main():
+   The main program.
+
+   LINE 96:  pad = find_gamepad()
+       Look for the gamepad (the function we defined above).
+
+   LINES 97-99:  if pad is None: ... sys.exit(1)
+       "is None" checks that find_gamepad() found nothing. If so we print a
+       hint and quit. (We use "is None" instead of "== None" because it is the
+       proper Python way to test for None.)
+
+   LINE 101:  threading.Thread(target=read_gamepad, args=(pad,), daemon=True).start()
+       Creates and starts the background thread. Piece by piece:
+         threading.Thread(...)   create a thread object
+         target=read_gamepad     the function that thread will run
+         args=(pad,)             the arguments to give that function.
+                                 The comma in (pad,) is REQUIRED: it makes
+                                 Python understand this is a tuple with one
+                                 item. Without the comma, (pad) is just pad.
+         daemon=True             "daemon" means "background helper". When the
+                                 main program ends (Ctrl+C), daemon threads are
+                                 killed automatically. Without this, the program
+                                 would hang forever because read_loop() never
+                                 ends on its own.
+         .start()                actually begin running it.
+       Result: from this line on, read_gamepad() runs in the background while
+       the code below keeps running in the main thread.
+
+   LINES 103-114:  try: ... except KeyboardInterrupt:
+       "KeyboardInterrupt" is the error Python raises when you press Ctrl+C.
+       Catching it lets us print "Stopped." and exit politely instead of
+       showing a long red error.
+
+   LINES 106-109:  the one-shot refresh (the heart of the one-shot logic)
+       with lock:
+           for i in [12, 13] + list(ONE_SHOT.values()):
+               keys[i] = 1 if i in pending else 0
+           pending.clear()
+
+       - "ONE_SHOT.values()" gives all the dictionary's values (14..24).
+       - "list(...)" turns that into a normal list.
+       - "[12, 13] + [...]" joins two lists. Result: [12, 13, 14, 15, ... 24],
+         which is every one-shot index (D-pad up, D-pad down, and all buttons).
+       - "keys[i] = 1 if i in pending else 0" is a ONE-LINE IF (called a
+         conditional expression):  VALUE_IF_TRUE if CONDITION else VALUE_IF_FALSE
+         It means: if index i is in "pending", write 1, otherwise write 0.
+       - "pending.clear()" empties the set so the same press is not reported
+         again at the next refresh. THAT is why the value returns to 0.
+
+   LINE 111:  print(keys)
+       Shows the array. Delete it if you will use "keys" in your own code.
+
+   LINE 112:  time.sleep(0.1)
+       Waits 0.1 seconds = 100 ms, then the loop repeats. This is your "100 ms
+       response time": the array is rewritten 10 times per second.
+
+LINES 117-118:   if __name__ == "__main__":  main()
+   Every Python file has a built-in variable called __name__.
+   - If you RUN the file directly, __name__ is "__main__" -> main() runs.
+   - If another file IMPORTS this one, __name__ is the file's name -> main()
+     does NOT run automatically.
+   It lets you reuse the file's functions elsewhere without starting the
+   program by accident. It is a standard Python habit.
+
+
+------------------------------------------------------------------------------
+ PART 3: THREADS AND LOCKS (the hardest part, explained simply)
+------------------------------------------------------------------------------
+
+THE PROBLEM
+   We need to do TWO things at the same time:
+      A) Wait for gamepad events whenever they happen.   (read_loop, line 87)
+      B) Every 100 ms, refresh the array.                (the while loop)
+   But read_loop() BLOCKS: it sits there waiting forever. If we ran it in the
+   main program, the code after it would never run. And if we used
+   time.sleep(0.1), we would miss events while sleeping.
+
+THE SOLUTION: THREADS
+   A thread is a second line of execution. Think of two workers in a kitchen:
+      Worker 1 (background thread):  stands at the door and writes down every
+                                     delivery that arrives (the events).
+      Worker 2 (main thread):        every 100 ms reads the notes and updates
+                                     the board (the keys array).
+   They work at the same time without waiting for each other.
+
+THE NEW PROBLEM: BOTH WORKERS TOUCH THE SAME DATA
+   Both threads use the "pending" set:
+      Worker 1 ADDS to it            (line 92)
+      Worker 2 READS it and CLEARS it (lines 108-109)
+   Imagine Worker 2 has just read "pending" but has NOT yet cleared it, and in
+   that tiny moment Worker 1 adds a new press. Then Worker 2 clears the set and
+   that press is lost forever. This kind of bug is called a RACE CONDITION and
+   it is very hard to debug because it only happens rarely.
+
+THE FIX: A LOCK
+   "lock = threading.Lock()" is like a bathroom key: only one thread can hold
+   it at a time.
+        with lock:
+            ...code...
+   means "wait until the key is free, take it, run this code, then give it
+   back automatically." While one thread is inside a "with lock:" block, the
+   other thread must wait before entering ANY "with lock:" block.
+   That guarantees the "read then clear" in the main loop can never be
+   interrupted by a new press being added in the middle.
+
+   Rule of thumb: if two threads touch the same variable, protect that
+   variable with a lock every time.
+
+   WHY DOESN'T "keys" NEED A LOCK FOR THE HOLDABLE ONES?
+   Writing a single number into a list slot (keys[0] = 1) is a single, tiny
+   operation in Python, and only one thread writes to those slots (the
+   background thread). The main thread only reads them. So nothing can go
+   wrong there.
+
+
+------------------------------------------------------------------------------
+ PART 4: WHY ONE-SHOT BUTTONS NEED "pending" (the key trick)
+------------------------------------------------------------------------------
+
+The array is only refreshed every 100 ms, but a fast key tap can start and
+end in 30 ms. If we wrote 1 into the array at the press and 0 at the release,
+the main loop might never see it.
+
+Instead:
+   1. At the press, the background thread writes the button's index into
+      "pending" (a mailbox).
+   2. At the next 100 ms refresh, the main thread looks in the mailbox:
+         index in pending  -> keys[index] = 1
+         index not in it   -> keys[index] = 0
+   3. Then it empties the mailbox (pending.clear()).
+
+Result:
+   - Even the fastest tap is seen (it waits in the mailbox until the refresh).
+   - It is 1 for exactly one refresh, then 0 on the next one, even if you keep
+     holding the key (because we only record the PRESS, never the hold).
+
+Holdable keys do the opposite: they follow the real live state (pressed = 1,
+released = 0) with no mailbox, which is why they stay 1 while held.
+
+Summary:
+   HOLDABLE   keys[i] mirrors the current state of the axis directly.
+   ONE-SHOT   keys[i] reports "was it pressed since last refresh?" and resets.
+
+
+------------------------------------------------------------------------------
+ PART 5: HOW THE DATA FLOWS (full picture)
+------------------------------------------------------------------------------
+
+   You press a keyboard key
+        |
+        v
+   ps4_keyboard.py reads it and sends a gamepad event to the virtual
+   "Wireless Controller" (via uinput)
+        |
+        v
+   Linux delivers the event to everyone who is listening to that device
+        |
+        v
+   gamepad_reader.py -> background thread -> pad.read_loop() receives "ev"
+        |
+        +--> axis event (EV_ABS)  -> update() writes keys[...] directly
+        |                            (D-pad up/down go to "pending")
+        |
+        +--> button event (EV_KEY, value 1) -> index added to "pending"
+        |
+        v
+   Main thread, every 100 ms:
+        copies "pending" into the one-shot slots of keys, clears "pending",
+        then prints the list.
+
+
+------------------------------------------------------------------------------
+ PART 6: GLOSSARY
+------------------------------------------------------------------------------
+
+ event          one small message from a device ("button X went down")
+ ev             our variable name for one event
+ ev.type        kind of event (EV_KEY = button, EV_ABS = axis)
+ ev.code        which button / axis
+ ev.value       its new value (button: 0/1/2, axis: a number)
+ e              nickname for evdev's "ecodes" table of constants
+ axis           something with a range of values (stick, trigger, D-pad hat)
+ hat            the D-pad, reported as an axis with values -1, 0, 1
+ dictionary     { lookup : result }, e.g. {BTN_SOUTH: 14}
+ set            a collection with no duplicates, fast "is it in there?" checks
+ list           ordered collection, access by index: keys[3]
+ index          the position in a list, starting at 0
+ thread         a second worker running at the same time as the main program
+ daemon thread  a background thread that dies automatically with the program
+ lock           a key so only one thread touches shared data at a time
+ race condition a rare bug caused by two threads changing the same data at once
+ blocking       a function that waits (and does nothing else) until something
+                happens, like read_loop()
+ global         a variable defined outside functions that all functions share
+ constant       a value that never changes (written in CAPITALS by convention)
+ docstring      a """text""" used as documentation, ignored when running
+
+
+------------------------------------------------------------------------------
+ PART 7: HOW TO WRITE THIS YOURSELF (step by step)
+------------------------------------------------------------------------------
+
+Build it in small pieces, running after each one:
+
+STEP 1  See what the gamepad sends.
+        Write only the imports, find the device, and print raw events:
+
+            from evdev import InputDevice, list_devices
+            for path in list_devices():
+                dev = InputDevice(path)
+                if dev.name == "Wireless Controller":
+                    for ev in dev.read_loop():
+                        print(ev.type, ev.code, ev.value)
+
+        Press keys and watch the numbers. This is how you discover which
+        code each button has.
+
+STEP 2  Replace the numbers with names using "ecodes as e"
+        (e.EV_KEY, e.BTN_SOUTH, ...). You can look up a number's name with:
+            python3 -c "from evdev import ecodes; print(ecodes.BTN[304])"
+
+STEP 3  Create the "keys" list and handle ONE holdable input (e.g. R2).
+
+STEP 4  Add the other holdable inputs the same way (copy, change code/index).
+
+STEP 5  Move the reading into a function and a thread, and add the main loop
+        with time.sleep(0.1).
+
+STEP 6  Add one-shot buttons: the "pending" set, the lock, and the refresh
+        block.
+
+TOOL TIP: you can watch every event live, without writing code, using:
+            sudo apt install evtest
+            sudo evtest
+        Then choose "Wireless Controller" from the list.
+
+==============================================================================
+ END
+==============================================================================
