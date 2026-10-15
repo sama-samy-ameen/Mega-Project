@@ -26,13 +26,13 @@ from evdev import InputDevice, list_devices, ecodes as e
 
 import rclpy
 from rclpy.node import Node
-from custom_msgs.msg import Motion
+from rov_interfaces.msg import MotionCommands
 
 
 class joystick(Node):
     def __init__(self):
         super().__init__("joystick")
-        self.pub = self.create_publisher(Motion, "/joystick_motion", 10)
+        self.pub = self.create_publisher(MotionCommands, "/joystick_motion", 10)
         self.create_timer(0.1, self.read_joystick)
 
     def read_joystick(self):
@@ -60,17 +60,29 @@ class joystick(Node):
         def find_gamepad(self):
             for path in list_devices():
                 dev = InputDevice(path)
-                if dev.name == "Wireless Controller":
+                caps = dev.capabilities()
+                # a gamepad has face buttons and stick axes, whatever its name is
+                if e.BTN_SOUTH in caps.get(e.EV_KEY, []) and \
+                   e.ABS_X in [code for code, _ in caps.get(e.EV_ABS, [])]:
                     return dev
             return None
 
 
         def update(code, value):
-            """Turn one gamepad axis event into 0/1 values (holdable ones)."""
+            """Turn one gamepad axis event into values (triggers/sticks are 0-255)."""
+            DEADZONE = 30
+
+            def push(value, direction):
+                """How far the stick is pushed one way: 0 inside the deadzone, up to 255."""
+                offset = (value - 128) * direction
+                if offset <= DEADZONE:
+                    return 0
+                return min(255, int((offset - DEADZONE) * 255 / (127 - DEADZONE)))
+
             if code == e.ABS_RZ:
-                self.keys[0] = int(value > 128)            # R2
+                self.keys[0] = value                       # R2 (0-255)
             elif code == e.ABS_Z:
-                self.keys[1] = int(value > 128)            # L2
+                self.keys[1] = value                       # L2 (0-255)
             elif code == e.ABS_HAT0X:
                 self.keys[2] = int(value == 1)             # D-pad right
                 self.keys[3] = int(value == -1)            # D-pad left
@@ -82,18 +94,17 @@ class joystick(Node):
                     with lock:
                         self.pending.add(13)               # D-pad down
             elif code == e.ABS_Y:
-                self.keys[4] = int(value < 64)             # Left stick up
-                self.keys[5] = int(value > 192)            # Left stick down
+                self.keys[4] = push(value, -1)             # Left stick up
+                self.keys[5] = push(value, 1)              # Left stick down
             elif code == e.ABS_X:
-                self.keys[6] = int(value > 192)            # Left stick right
-                self.keys[7] = int(value < 64)             # Left stick left
+                self.keys[6] = push(value, 1)              # Left stick right
+                self.keys[7] = push(value, -1)             # Left stick left
             elif code == e.ABS_RY:
-                self.keys[8] = int(value < 64)             # Right stick up
-                self.keys[9] = int(value > 192)            # Right stick down
+                self.keys[8] = push(value, -1)             # Right stick up
+                self.keys[9] = push(value, 1)              # Right stick down
             elif code == e.ABS_RX:
-                self.keys[10] = int(value > 192)           # Right stick right
-                self.keys[11] = int(value < 64)            # Right stick left
-
+                self.keys[10] = push(value, 1)             # Right stick right
+                self.keys[11] = push(value, -1)            # Right stick left
 
         def read_gamepad(pad):
             for ev in pad.read_loop():
@@ -121,22 +132,23 @@ class joystick(Node):
                         self.keys[i] = 1 if i in self.pending else 0
                     self.pending.clear()
 
-                motion_msg = Motion()
+                motion_msg = MotionCommands()
                 motion_msg.speeddown = self.keys[18]
                 motion_msg.speedup = self.keys[19]
                 motion_msg.surgeforward = self.keys[0]
                 motion_msg.surgebackward = self.keys[1]
-                motion_msg.swayright = self.keys[2]
-                motion_msg.swayleft = self.keys[3]
+                motion_msg.rollcw = self.keys[2]
+                motion_msg.rollccw = self.keys[3]
                 motion_msg.heaveup = self.keys[4]
                 motion_msg.heavedown = self.keys[5]
                 motion_msg.yawcw = self.keys[6]
                 motion_msg.yawccw = self.keys[7]
                 motion_msg.pitchup = self.keys[8]
                 motion_msg.pitchdown = self.keys[9]
-                motion_msg.rollcw = self.keys[10]
-                motion_msg.rollccw = self.keys[11]
+                motion_msg.swayright = self.keys[10]
+                motion_msg.swayleft = self.keys[11]
 
+                self.get_logger().info(f"{motion_msg}")
                 self.pub.publish(motion_msg)
 
                 time.sleep(0.1)   # 100 ms
