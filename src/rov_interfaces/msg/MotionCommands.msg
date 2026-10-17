@@ -1,20 +1,10 @@
-int32 speedup
-int32 speeddown
+bool speedup
+bool speeddown
 
-int32 surgeforward
-int32 surgebackward
+int8 surge
+int8 sway
+int8 heave
 
-int32 swayright
-int32 swayleft
-
-int32 heaveup
-int32 heavedown
-
-int32 pitchup
-int32 pitchdown
-
-int32 rollcw
-int32 rollccw
-
-int32 yawcw
-int32 yawccw
+int8 pitch
+int8 roll
+int8 yaw

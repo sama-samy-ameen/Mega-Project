@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            "motion = rov_motion.rov_motion_node:main",
         ],
     },
 )

@@ -21,6 +21,7 @@ Stop:  Ctrl+C
 import sys
 import threading
 import time
+import numpy
 
 from evdev import InputDevice, list_devices, ecodes as e
 
@@ -77,16 +78,16 @@ class joystick(Node):
                 offset = (value - 128) * direction
                 if offset <= DEADZONE:
                     return 0
-                return min(255, int((offset - DEADZONE) * 255 / (127 - DEADZONE)))
-
+                return min(100, int((offset - DEADZONE) * 100 / (127 - DEADZONE)))
+            
             if code == e.ABS_RZ:
-                self.keys[0] = value                       # R2 (0-255)
+                self.keys[0] = int(value *100/255)    # R2
             elif code == e.ABS_Z:
-                self.keys[1] = value                       # L2 (0-255)
+                self.keys[1] = int(value *100/255)      # L2
             elif code == e.ABS_HAT0X:
                 self.keys[2] = int(value == 1)             # D-pad right
                 self.keys[3] = int(value == -1)            # D-pad left
-            elif code == e.ABS_HAT0Y:                 # D-pad up/down are one-shot
+            elif code == e.ABS_HAT0Y:                      # D-pad up/down are one-shot
                 if value == -1:
                     with lock:
                         self.pending.add(12)               # D-pad up
@@ -118,7 +119,7 @@ class joystick(Node):
     
         pad = find_gamepad(self)
         if pad is None:
-            self.get_logger().error("Gamepad not found. Start ps4_keyboard.py first.")
+            self.get_logger().error("Gamepad not found. Connect your gamepad first.")
             rclpy.shutdown()   # stops spin() so the node exits cleanly
             return
 
@@ -133,20 +134,33 @@ class joystick(Node):
                     self.pending.clear()
 
                 motion_msg = MotionCommands()
-                motion_msg.speeddown = self.keys[18]
-                motion_msg.speedup = self.keys[19]
-                motion_msg.surgeforward = self.keys[0]
-                motion_msg.surgebackward = self.keys[1]
-                motion_msg.rollcw = self.keys[2]
-                motion_msg.rollccw = self.keys[3]
-                motion_msg.heaveup = self.keys[4]
-                motion_msg.heavedown = self.keys[5]
-                motion_msg.yawcw = self.keys[6]
-                motion_msg.yawccw = self.keys[7]
-                motion_msg.pitchup = self.keys[8]
-                motion_msg.pitchdown = self.keys[9]
-                motion_msg.swayright = self.keys[10]
-                motion_msg.swayleft = self.keys[11]
+
+                motion_msg.speeddown = bool(self.keys[18])
+                motion_msg.speedup = bool(self.keys[19])
+
+                # motion_msg.surgeforward = self.keys[0]
+                # motion_msg.surgebackward = self.keys[1]
+                motion_msg.surge = self.keys[0] - self.keys[1]
+
+                # motion_msg.rollcw = self.keys[2]
+                # motion_msg.rollccw = self.keys[3]
+                motion_msg.roll = self.keys[3] - self.keys[2]
+
+                # motion_msg.heaveup = self.keys[4]
+                # motion_msg.heavedown = self.keys[5]
+                motion_msg.heave = self.keys[4] - self.keys[5]
+
+                # motion_msg.yawcw = self.keys[6]
+                # motion_msg.yawccw = self.keys[7]
+                motion_msg.yaw = self.keys[7] - self.keys[6]
+
+                # motion_msg.pitchup = self.keys[8]
+                # motion_msg.pitchdown = self.keys[9]
+                motion_msg.pitch = self.keys[8] - self.keys[9]
+
+                # motion_msg.swayright = self.keys[10]
+                # motion_msg.swayleft = self.keys[11]
+                motion_msg.sway = self.keys[10] - self.keys[11]
 
                 self.get_logger().info(f"{motion_msg}")
                 self.pub.publish(motion_msg)
