@@ -113,9 +113,9 @@ class AutonomousControlNode(Node):
         elif self.in_oak_camera_center and not self.bounding_box_correct_size:
             cmd = self.move_forward(msg.height, msg.width)
 
-            if msg.height > 100 and msg.width > 100:
-                self.bounding_box_correct_size = True
-                self.get_logger().info('Correct size')
+            # if msg.height > 100 and msg.width > 100:
+            #     self.bounding_box_correct_size = True
+            #     self.get_logger().info('Correct size')
 
         elif self.bounding_box_correct_size and not self.is_stable_2:
             cmd = self.stop_moving(stability_stage=2)
@@ -274,12 +274,51 @@ class AutonomousControlNode(Node):
         return cmd
 
     
-    def move_forward(self, height, width):
-
+    def move_forward(self, height: float, width: float) -> AutonomousCommand:
         cmd = AutonomousCommand()
 
-        if not height in range(90, 110) or not width in range(90, 110):
-            cmd.movements_direction.linear.x = 10
+        # 1. Fallback for Frame Loss
+        if height == 0 or width == 0:
+            if self.last_detection_of_target is not None:
+                height = float(self.last_detection_of_target.height)
+                width = float(self.last_detection_of_target.width)
+            else:
+                return cmd
+
+        target_dimension = 100.0  # Desired pixel size for target distance
+        tolerance = 5.0           # Acceptable pixel window (95 to 105 px)
+
+        # 2. Angle Compensation: Use max dimension to prevent over-approaching due to perspective compression
+        perceived_size = max(height, width)
+
+        # Compute Error
+        # Positive error = target is too far (ROV needs to move FORWARD)
+        # Negative error = target is too close (ROV needs to move BACKWARD)
+        error = target_dimension - perceived_size
+
+        # 3. Check Target Arrival Window
+        if abs(error) <= tolerance:
+            self.bounding_box_correct_size = True
+            self.get_logger().info('Target bounding box size reached!')
+            cmd.linear_x = 0
+            self.last_error_forward = 0.0
+            return cmd
+
+        # 4. Discrete PID Calculation for Forward Surge (Linear X)
+        p_out = self.kp * error
+        d_out = self.kd * ((error - getattr(self, 'last_error_forward', 0.0)) / self.dt)
+        self.last_error_forward = error
+
+        # 5. Command Output Clamping (-30 to +30 max surge)
+        raw_surge = p_out + d_out
+        cmd.linear_x = int(max(-30, min(30, raw_surge)))
+
+        # Zero out unhandled axes
+        cmd.linear_y = 0
+        cmd.linear_z = 0
+        cmd.angular_x = 0
+        cmd.angular_y = 0
+        cmd.angular_z = 0
 
         return cmd
 
