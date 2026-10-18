@@ -13,6 +13,7 @@ class Motion(Node):
         self.speeds = []
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
 
+
     def joystick_motion(self, msg:MotionCommands):
 
         if msg.speedup and self.speed < 200:
@@ -23,10 +24,21 @@ class Motion(Node):
         surge = msg.surge * self.speed/100
         sway = msg.sway * self.speed/100
         heave = msg.heave * self.speed/100
-        pitch = msg.pitch * self.speed/100
+        pitch = msg.pitch * self.speed/100 
         yaw = msg.yaw * self.speed/100
         roll = msg.roll * self.speed
 
+        # self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+
+        self.limiting_current()
+        self.backward_scaling()
+
+        self.get_logger().info(f"{self.speeds}")
+        #Todo publish
+
+    def eight_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
         TFR = (surge - sway - heave - pitch + yaw - roll)
         TFL = (surge + sway - heave - pitch - yaw + roll)
         TBR = (surge - sway + heave - pitch - yaw - roll)
@@ -36,17 +48,32 @@ class Motion(Node):
         BBL = (surge - sway - heave + pitch - yaw + roll)
         BBR = (surge + sway - heave + pitch + yaw - roll)
 
+        self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
 
+    def seven_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
+        TFR = (-heave + yaw + roll)
+        TFL = (-heave)
+        TBR = (surge - sway + heave - pitch + roll)
+        TBL = (surge - sway + heave - pitch - yaw)
+        BFR = (surge - sway + pitch + yaw - roll)
+        BFL = (surge - sway + pitch)
+        BBL = (-yaw + roll)
+        BBR = 0
 
         self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
-        self.limiting_current()
-        self.backward_scaling()
 
-        self.get_logger().info(f"{self.speeds}")
+    def six_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
+        TFR = (surge - heave)
+        TFL = (surge - heave)
+        TBR = (heave - pitch)
+        TBL = (heave - pitch)
+        BFR = (surge + pitch)
+        BFL = (surge + pitch)
+        BBR = 0
+        BBL = 0
 
-        
-        return self.speeds
-        
+        self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
+
     def limiting_current(self):
         max_val = max(abs(s) for s in self.speeds)
         if max_val > self.max_power and max_val > 0.0:
