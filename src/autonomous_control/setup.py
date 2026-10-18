@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'autonomous_control = autonomous_control.automatic_move:main',
         ],
     },
 )
