@@ -64,6 +64,20 @@ class AutonomousControlNode(Node):
         self.kd = 0.5
         self.last_error = 0.0
         self.dt = 0.1
+        
+        # Internal PID Error Accumulators
+        self.last_error_x = 0.0
+        self.last_error_y = 0.0
+        self.last_error_forward = 0.0
+        self.last_error_pitch = 0.0
+
+        # IMU Fallback Values (since imu_callback is removed)
+        self.current_roll = 0.0
+        self.current_pitch = 0.0
+
+        # Boost tick state initialization
+        self.boost_ticks = 0
+        self.max_boost_ticks = 5
 
         # position check
         self.reached_to_max_height = False
@@ -112,10 +126,6 @@ class AutonomousControlNode(Node):
 
         elif self.in_oak_camera_center and not self.bounding_box_correct_size:
             cmd = self.move_forward(msg.height, msg.width)
-
-            # if msg.height > 100 and msg.width > 100:
-            #     self.bounding_box_correct_size = True
-            #     self.get_logger().info('Correct size')
 
         elif self.bounding_box_correct_size and not self.is_stable_2:
             cmd = self.stop_moving(stability_stage=2)
@@ -199,9 +209,10 @@ class AutonomousControlNode(Node):
             if len(self.error_buffer) == self.window_size:
                 mean = sum(self.error_buffer) / self.window_size
                 variance = sum((x - mean) ** 2 for x in self.error_buffer) / self.window_size
+                std_dev = variance ** 0.5
 
                 # Jitter settled below threshold
-                if variance < self.stability_threshold:
+                if std_dev < self.stability_threshold:
                     self.get_logger().info(f'ROV stabilized at stage {stability_stage}! (Variance: {variance:.4f})')
                     
                     if stability_stage == 1:
@@ -322,39 +333,99 @@ class AutonomousControlNode(Node):
 
         return cmd
 
-    def move_to_gripper_camera_center(self, camera, x, y):
-
+    def move_to_original_pitch(self) -> AutonomousCommand:
         cmd = AutonomousCommand()
-        
-        if camera == 1:
-            cmd.movements_direction.angular.z = (x+1920)/1920*180
-            cmd.movements_direction.angular.y = (y+1080)/1080*180
 
-        elif camera == 2:
-            cmd.movements_direction.angular.z = (x-1920)/1920*180
-            cmd.movements_direction.angular.y = (y-1080)/1080*180
-        
-        elif camera == 3:
-            cmd.movements_direction.angular.z = (x+1920)/1920*180
-            cmd.movements_direction.angular.y = (y+1080)/1080*180
-        
-        # elif camera == 4:
-        #     cmd.movements_direction.angular.z = (x-1920)/1920*180
-        #     cmd.movements_direction.angular.y = (y-1080)/1080*180
-        # elif camera == 5:
-        #     cmd.movements_direction.angular.z = (x-1920)/1920*180
-        #     cmd.movements_direction.angular.y = (y-1080)/1080*180
+        if self.imu_readings is None:
+            return cmd
+
+        # Target pitch angle (0.0 degrees level)
+        target_pitch = 0.0
+        current_pitch = self.imu_readings.angular_y
+        pitch_error = target_pitch - current_pitch
+        pitch_tolerance = 1.0  # Allowed error margin in degrees
+
+        # Check if pitch restoration is complete
+        if abs(pitch_error) <= pitch_tolerance:
+            self.at_original_pitch = True
+            self.get_logger().info('Level pitch restored!')
+            cmd.angular_y = 0
+            self.last_error_pitch = 0.0
+            return cmd
+
+        # Discrete PID Calculation for Pitch (Angular Y)
+        p_out = self.kp * pitch_error
+        d_out = self.kd * ((pitch_error - self.last_error_pitch) / self.dt)
+        self.last_error_pitch = pitch_error
+
+        # Clamped pitch adjustment thrust
+        raw_pitch_cmd = p_out + d_out
+        cmd.angular_y = int(max(-25, min(25, raw_pitch_cmd)))
 
         return cmd
 
-    def let_go(self):
+    def move_boosting_step(self) -> AutonomousCommand:
         cmd = AutonomousCommand()
-        cmd.gripper = int(0b00_00_00_00)
-        self.reset()
+
+        if not hasattr(self, 'boost_ticks'):
+            self.boost_ticks = 0
+            self.max_boost_ticks = 5  # ~0.5 seconds at 10 Hz
+
+        if self.boost_ticks < self.max_boost_ticks:
+            cmd.linear_x = 10  # Very gentle forward creep
+            self.boost_ticks += 1
+            self.get_logger().info(f'Nudging forward: {self.boost_ticks}/{self.max_boost_ticks}')
+        else:
+            cmd.linear_x = 0
+            self.moved_boosting_step = True
+            self.get_logger().info('Nudge complete!')
+            delattr(self, 'boost_ticks')
+
+        cmd.linear_y = 0
+        cmd.linear_z = 0
+        cmd.angular_x = 0
+        cmd.angular_y = 0
+        cmd.angular_z = 0
+
+        return cmd
+
+    def let_go(self) -> AutonomousCommand:
+        cmd = AutonomousCommand()
+
+        # Zero out all movement axes for total stationary release
+        cmd.linear_x = 0
+        cmd.linear_y = 0
+        cmd.linear_z = 0
+        cmd.angular_x = 0
+        cmd.angular_y = 0
+        cmd.angular_z = 0
+
+        # Trigger payload release mechanism
+        cmd.gripper = 0b00_00_00_00  # 1 = Release / Open command signal
+
+        self.finished = True
+        self.get_logger().info('Coral transplantation payload released! Task finished.')
+
         return cmd
 
     def reset(self):
-        pass
+        cmd = AutonomousCommand()
+        self.autonomous_mode = False
+        self.search = False
+        self.found = False
+        self.is_stable_1 = False
+        self.in_oak_camera_center = False
+        self.bounding_box_correct_size = False
+        self.is_stable_2 = False
+        self.at_original_pitch = False
+        self.is_stable_3 = False
+        self.moved_boosting_step = False
+        self.is_stable_4 = False
+        self.finished = False
+        self.get_logger().info('Finished task.')
+        self.get_logger().info('Resetting...')
+        cmd.autonomous_mode = False
+        return cmd
 
 def main(args=None):
     rclpy.init(args=args)
