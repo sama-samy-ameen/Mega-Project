@@ -1,9 +1,8 @@
-
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray, Int16MultiArray
+from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
 from rov_interfaces.msg import MotionCommands
-
+from pressure_sensor import PressureSensor
 
 class Motion(Node):
     def __init__(self):
@@ -12,6 +11,7 @@ class Motion(Node):
         self.max_power = 200
         self.speeds = []
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
+        self.pressure_sensor= PressureSensor(bus=1)
 
 
     def joystick_motion(self, msg:MotionCommands):
@@ -28,17 +28,34 @@ class Motion(Node):
         yaw = msg.yaw * self.speed/100
         roll = msg.roll * self.speed
 
-        # self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
-        # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
-        self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        #simple depth hold logic
+        # 1. Toggle Depth Hold whenever R3 is clicked
+        if msg.depth_hold:
+            self.depth_hold_active = not self.depth_hold_active
 
-        self.limiting_current()
-        self.backward_scaling()
+            if self.depth_hold_active:
+                self.target_depth = self.pressure_sensor.depth()
+                self.get_logger().info(
+                f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m"
+                )
+            else:
+                self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
-        self.get_logger().info(f"{self.speeds}")
-        #Todo publish
+          # 2. Control vertical motion:
+        if self.depth_hold_active:
+            current_depth = self.pressure_sensor.depth()
 
-    def eight_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
+        # If shallower than target -> push down (-30); if deeper -> push up (+30)
+            if current_depth < self.target_depth - 0.05:
+                heave = -30.0
+            elif current_depth > self.target_depth + 0.05:
+                heave = +30.0
+            else:
+                heave = 0.0
+        else:
+            # Normal pilot manual heave from left stick
+            heave = msg.heave * self.speed/100
+
         TFR = (surge - sway - heave - pitch + yaw - roll)
         TFL = (surge + sway - heave - pitch - yaw + roll)
         TBR = (surge - sway + heave - pitch - yaw - roll)
@@ -98,7 +115,8 @@ class Motion(Node):
             for low, high, factor in segments:
                 if low < s <= high:
                     self.speeds[i] = s * factor
-                    break
+                    breakcurrent_pressure = self.pressure_sensor.pressure()
+
 
 
 
