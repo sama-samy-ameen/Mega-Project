@@ -16,7 +16,6 @@ class AutonomousControlNode(Node):
         self.search = False
         self.found = False
         self.is_stable_1 = False
-        self.in_oak_camera_region = False
         self.in_oak_camera_center = False
         self.bounding_box_correct_size = False
         self.is_stable_2 = False
@@ -108,10 +107,7 @@ class AutonomousControlNode(Node):
             self.get_logger().info('Positioning the ROV')
             cmd = self.stop_moving(stability_stage=1)
         
-        elif self.is_stable_1 and not self.in_oak_camera_region:
-            cmd = self.move_to_oak_camera_region(msg.camera, msg.x, msg.y)
-        
-        elif self.in_oak_camera_region and not self.in_oak_camera_center:
+        elif self.is_stable_1 and not self.in_oak_camera_center:
             cmd = self.move_to_oak_camera_center(msg.camera, msg.x, msg.y)
 
         elif self.in_oak_camera_center and not self.bounding_box_correct_size:
@@ -222,34 +218,62 @@ class AutonomousControlNode(Node):
         return cmd
 
 
-    def move_to_oak_camera_region(self, camera, x, y):
+    def move_to_oak_camera_center(self, camera: int, x: int, y: int) -> AutonomousCommand:
         cmd = AutonomousCommand()
 
-        if camera == 2:
-            cmd.movements_direction.angular.z = (x-1920)/1920*180
-            cmd.movements_direction.angular.y = (y-1080)/1080*180
-        
-        elif camera == 3:
-            cmd.movements_direction.angular.z = (x+1920)/1920*180
-            cmd.movements_direction.angular.y = (y-1080)/1080*180
+        # 1. Target Data Fallback (Handling Camera Frame Loss)
+        if camera == 0:
+            if self.last_detection_of_target is not None:
+                # Use cached pixel offsets from the last valid vision frame
+                x = self.last_detection_of_target.x
+                y = self.last_detection_of_target.y
+            else:
+                # No vision data available yet; hold current position
+                return cmd
 
-        elif camera == 4:
-            cmd.movements_direction.angular.z = (x+1920)/1920*180
-            cmd.movements_direction.angular.y = (y+1080)/1080*180
+        # Frame center setup (assuming 1920x1080 resolution)
+        x_center = 1920 / 2.0
+        y_center = 1080 / 2.0
+        deadband = 40  # Pixel tolerance radius
 
-        elif camera == 5:
-            cmd.movements_direction.angular.z = (x-1920)/1920*180
-            cmd.movements_direction.angular.y = (y+1080)/1080*180
+        # Compute Pixel Errors
+        error_x = x - x_center
+        error_y = y_center - y  # Inverted so positive error = need to go UP
 
-    def move_to_oak_camera_center(self, camera, x, y):
-        
-        cmd = AutonomousCommand()
+        # 2. Check if Target is Centered
+        if abs(error_x) <= deadband and abs(error_y) <= deadband:
+            self.in_oak_camera_center = True
+            self.get_logger().info('Target locked in OAK-D Center!')
+            cmd.angular_z = 0
+            cmd.linear_z = 0
+            # Reset internal error accumulators for the next step
+            self.last_error_x = 0.0
+            self.last_error_y = 0.0
+            return cmd
 
-        cmd.movements_direction.angular.z = (x-1920/2)/1920*180
-        cmd.movements_direction.angular.y = (y-1080/2)/1080*180
+        # 3. Discrete PID Calculation for Yaw (Angular Z)
+        # P-Term
+        p_out_x = self.kp * error_x
+        # D-Term (derivative of error over time step self.dt)
+        d_out_x = self.kd * ((error_x - getattr(self, 'last_error_x', 0.0)) / self.dt)
+        # Save last error
+        self.last_error_x = error_x
+
+        # 4. Discrete PID Calculation for Altitude (Linear Z)
+        p_out_y = self.kp * error_y
+        d_out_y = self.kd * ((error_y - getattr(self, 'last_error_y', 0.0)) / self.dt)
+        self.last_error_y = error_y
+
+        # 5. Output Clamp (-100 to +100 Max Relative Power)
+        raw_yaw = p_out_x + d_out_x
+        raw_depth = p_out_y + d_out_y
+
+        cmd.angular_z = int(max(-50, min(50, raw_yaw)))    # Clamped to half-power max for stability
+        cmd.linear_z = int(max(-40, min(40, raw_depth)))
 
         return cmd
 
+    
     def move_forward(self, height, width):
 
         cmd = AutonomousCommand()
