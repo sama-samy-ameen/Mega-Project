@@ -39,7 +39,7 @@ class Motion(Node):
 
 
         self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
-        self.limitting_current()
+        self.limiting_current()
         self.backward_scaling()
 
         self.get_logger().info(f"{self.speeds}")
@@ -47,7 +47,7 @@ class Motion(Node):
         
         return self.speeds
         
-    def limitting_current(self):
+    def limiting_current(self):
         max_val = max(abs(s) for s in self.speeds)
         if max_val > self.max_power and max_val > 0.0:
             scale = self.max_power / max_val
