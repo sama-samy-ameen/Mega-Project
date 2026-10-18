@@ -8,3 +8,5 @@ int8 heave
 int8 pitch
 int8 roll
 int8 yaw
+
+bool depth_hold
