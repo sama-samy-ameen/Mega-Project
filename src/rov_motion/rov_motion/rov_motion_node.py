@@ -40,6 +40,8 @@ class Motion(Node):
 
         self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
         self.limitting_current()
+        self.backward_scaling()
+
         self.get_logger().info(f"{self.speeds}")
 
         
@@ -50,7 +52,27 @@ class Motion(Node):
         if max_val > self.max_power and max_val > 0.0:
             scale = self.max_power / max_val
             self.speeds = [s * scale for s in self.speeds]
-            
+
+    def backward_scaling(self):
+        # (lower offset, upper offset, factor): lower bound exclusive, upper inclusive
+        segments = [
+            (30,   45,  1),
+            (45,   65,  0.95),
+            (65,  100,  0.92),
+            (100, 160,  0.89),
+            (160, 200,  0.87),
+        ]
+
+        # Only scale when some thruster is reversing
+        if not any(s < 1 for s in self.speeds):
+            return
+
+        for i, s in enumerate(self.speeds):
+            for low, high, factor in segments:
+                if low < s <= high:
+                    self.speeds[i] = s * factor
+                    break
+
 
 
 
