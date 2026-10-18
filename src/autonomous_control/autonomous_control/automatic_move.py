@@ -4,6 +4,7 @@ from rov_interfaces.msg import ObjectData, AutonomousCommand, RovCommand
 from collections import deque
 from sensor_msgs.msg import Imu
 from math import pi as PI
+import numpy as np
 
 
 class AutonomousControlNode(Node):
@@ -69,7 +70,7 @@ class AutonomousControlNode(Node):
         self.reached_to_max_height = False
 
         # Buffer to keep the last 50 IMU readings (~0.5 seconds at 100 Hz)
-        self.window_size = 50
+        self.window_size = 10
         self.error_buffer = deque(maxlen=self.window_size)
 
         # Thresholds
@@ -88,23 +89,12 @@ class AutonomousControlNode(Node):
 
     def model_callback(self, msg: ObjectData):
 
-        # self.search = False
-        # self.found = False
-        # self.is_stable_1 = False
-        # self.in_oak_camera_region = False
-        # self.in_oak_camera_center = False
-        # self.bounding_box_correct_size = False
-        # self.is_stable_2 = False
-        # self.at_original_pitch = False
-        # self.is_stable_3 = False
-        # self.moved_boosting_step = False
-        # self.is_stable_4 = False
-        # self.finished = False
-
         if not self.autonomous_mode:
             return
 
+
         cmd = AutonomousCommand()
+
 
         if msg.camera != 0: 
             self.last_detection_of_target = msg
@@ -116,7 +106,7 @@ class AutonomousControlNode(Node):
 
         elif self.found and not self.is_stable_1:
             self.get_logger().info('Positioning the ROV')
-            cmd = self.stop_moving()
+            cmd = self.stop_moving(stability_stage=1)
         
         elif self.is_stable_1 and not self.in_oak_camera_region:
             cmd = self.move_to_oak_camera_region(msg.camera, msg.x, msg.y)
@@ -132,19 +122,19 @@ class AutonomousControlNode(Node):
                 self.get_logger().info('Correct size')
 
         elif self.bounding_box_correct_size and not self.is_stable_2:
-            cmd = self.stop_moving()
+            cmd = self.stop_moving(stability_stage=2)
 
         elif self.is_stable_2 and not self.at_original_pitch:
             cmd = self.move_to_original_pitch()
 
         elif self.at_original_pitch and not self.is_stable_3:
-            cmd = self.stop_moving()
+            cmd = self.stop_moving(stability_stage=3)
 
         elif self.is_stable_3 and not self.moved_boosting_step:
             cmd = self.move_boosting_step()
 
         elif self.moved_boosting_step and not self.is_stable_4:
-            cmd = self.stop_moving()
+            cmd = self.stop_moving(stability_stage=4)
 
         elif self.is_stable_4 and not self.finished:
             cmd = self.let_go()
@@ -153,116 +143,110 @@ class AutonomousControlNode(Node):
         self.command_pub.publish(cmd)
 
     def start_search(self):
-
-        P = 10
-        I = 10
-        D = 10
-        
         cmd = AutonomousCommand()
         
-        if not self.reached_to_height:
-            e = (self.initial_imu_readings.orientation.x + 1.0) - self.imu_readings.orientation.x
-            if e < 0.1:
-                self.reached_to_height = True
-                cmd.movements_direction.linear.z = 0
-                return cmd
-            cmd.movements_direction.linear.z = P*e + I*self.last_error + D*(e - self.last_error)
-            self.last_error = e
-            return cmd
-
+        # 1. Check pressure/depth from IMU data
+        # Define max_search_depth threshold according to your pool setup
+        max_search_depth = 0.5  # e.g., 0.5 meters from the surface
         
-        if not self.done_full_rotation:
-            e = self.initial_imu_readings.orientation.z - self.imu_readings.orientation.z
-            if e < 0.1:
-                self.done_full_rotation = True
-                cmd.movements_direction.angular.z = 0
-                return cmd
-            cmd.movements_direction.angular.z = P*e + I*self.last_error + D*(e - self.last_error)
-            self.last_error = e
-            return cmd
+        if self.imu_readings is not None and hasattr(self.imu_readings, 'depth'):
+            if self.imu_readings.depth <= max_search_depth:
+                self.reached_to_max_height = True
 
-    def stop_moving(self):
-
-        cmd = AutonomousCommand()
-        
-        # Default all thruster outputs to zero
-        cmd.movements_direction.linear.x = 0.0
-        cmd.movements_direction.linear.y = 0.0
-        cmd.movements_direction.linear.z = 0.0
-        cmd.movements_direction.angular.x = 0.0
-        cmd.movements_direction.angular.y = 0.0
-        cmd.movements_direction.angular.z = 0.0
-
-        if self.imu_readings is None:
-            return cmd
-
-        # 1. Compute your current IMU error (e.g., orientation or acceleration error)
-        current_error = self.imu_readings.linear_acceleration.z - 9.81  # Example target
-
-        # 2. Add current error to non-blocking rolling buffer
-        self.error_buffer.append(current_error)
-
-        # 3. Compute time delta (dt) for discrete PID
-        current_time = self.get_clock().now().nanoseconds / 1e9
-        if self.stop_last_time is None:
-            dt = 0.01
+        # 2. Execution Logic based on altitude limit
+        if not self.reached_to_max_height:
+            # Slow ascent + slow yaw rotation
+            cmd.linear_z = 15   # Controlled vertical velocity
+            cmd.angular_z = 12  # Slow yaw to prevent frame blur and overshooting
         else:
-            dt = current_time - self.stop_last_time
-        self.stop_last_time = current_time
+            self.get_logger().info('Reached max altitude limit. Holding depth and scanning...')
+            # Stop ascending, hold current depth, keep scanning in place
+            cmd.linear_z = 0
+            cmd.angular_z = 12
 
-        if dt <= 0:
-            dt = 0.01
-
-        # 4. Evaluate stability when buffer fills up
-        if len(self.error_buffer) == self.window_size:
-            std_dev = np.std(self.error_buffer)
-            self.is_stable = std_dev < self.stability_threshold
-
-            if self.is_stable:
-                self.get_logger().info(f"IMU Stable | Std Dev: {std_dev:.4f}")
-                
-                # Active PID counter-thrust to maintain steady position/leveling when stable
-                self.stop_integral += current_error * dt
-                derivative = (current_error - self.stop_last_error) / dt
-                
-                pid_output = (self.kp_stop * current_error) + (self.ki_stop * self.stop_integral) + (self.kd_stop * derivative)
-                self.stop_last_error = current_error
-
-                # Apply counter active effort to vertical stabilization
-                cmd.movements_direction.linear.z = pid_output
-                return cmd
-            else:
-                self.get_logger().warn(f"IMU Unstable (High Fluctuation) | Std Dev: {std_dev:.4f}")
-                # Reset PID state on high noise/instability
-                self.stop_integral = 0.0
-                self.stop_last_error = 0.0
-                return cmd
+        # 3. Explicitly zero unhandled command fields for motor safety
+        cmd.linear_x = 0
+        cmd.linear_y = 0
+        cmd.angular_x = 0
+        cmd.angular_y = 0
+        cmd.gripper = 0
 
         return cmd
 
 
-    def move_to_oak_camera_center(self, camera, x, y):
+    def stop_moving(self, stability_stage: int) -> AutonomousCommand:
+        """
+        Commands zero velocity setpoints to let low-level controllers hold position,
+        and calculates roll/pitch variance over a 1-second rolling window (10 Hz).
+        When variance drops below threshold, sets the corresponding stability flag.
+        """
+        cmd = AutonomousCommand()
         
+        # Explicit zero commands for motion team PID lock
+        cmd.linear_x = 0
+        cmd.linear_y = 0
+        cmd.linear_z = 0
+        cmd.angular_x = 0
+        cmd.angular_y = 0
+        cmd.angular_z = 0
+
+        # Verify IMU data availability
+        if self.imu_readings is not None:
+            current_roll = self.imu_readings.orientation.x
+            current_pitch = self.imu_readings.orientation.y
+
+            # Combined tilt magnitude Jitter
+            tilt_magnitude = (current_roll ** 2 + current_pitch ** 2) ** 0.5
+            self.error_buffer.append(tilt_magnitude)
+
+            # Check variance once the 1-second window is populated
+            if len(self.error_buffer) == self.window_size:
+                mean = sum(self.error_buffer) / self.window_size
+                variance = sum((x - mean) ** 2 for x in self.error_buffer) / self.window_size
+
+                # Jitter settled below threshold
+                if variance < self.stability_threshold:
+                    self.get_logger().info(f'ROV stabilized at stage {stability_stage}! (Variance: {variance:.4f})')
+                    
+                    if stability_stage == 1:
+                        self.is_stable_1 = True
+                    elif stability_stage == 2:
+                        self.is_stable_2 = True
+                    elif stability_stage == 3:
+                        self.is_stable_3 = True
+                    elif stability_stage == 4:
+                        self.is_stable_4 = True
+
+                    self.error_buffer.clear()
+
+        return cmd
+
+
+    def move_to_oak_camera_region(self, camera, x, y):
         cmd = AutonomousCommand()
 
-        if camera == 1:
-            cmd.movements_direction.angular.z = (x-1920/2)/1920*180
-            cmd.movements_direction.angular.y = (y-1080/2)/1080*180
-
-        elif camera == 2:
+        if camera == 2:
             cmd.movements_direction.angular.z = (x-1920)/1920*180
             cmd.movements_direction.angular.y = (y-1080)/1080*180
         
         elif camera == 3:
             cmd.movements_direction.angular.z = (x+1920)/1920*180
+            cmd.movements_direction.angular.y = (y-1080)/1080*180
+
+        elif camera == 4:
+            cmd.movements_direction.angular.z = (x+1920)/1920*180
             cmd.movements_direction.angular.y = (y+1080)/1080*180
+
+        elif camera == 5:
+            cmd.movements_direction.angular.z = (x-1920)/1920*180
+            cmd.movements_direction.angular.y = (y+1080)/1080*180
+
+    def move_to_oak_camera_center(self, camera, x, y):
         
-        # elif camera == 4:
-        #     cmd.movements_direction.angular.z = (x-1920)/1920*180
-        #     cmd.movements_direction.angular.y = (y-1080)/1080*180
-        # elif camera == 5:
-        #     cmd.movements_direction.angular.z = (x-1920)/1920*180
-        #     cmd.movements_direction.angular.y = (y-1080)/1080*180
+        cmd = AutonomousCommand()
+
+        cmd.movements_direction.angular.z = (x-1920/2)/1920*180
+        cmd.movements_direction.angular.y = (y-1080/2)/1080*180
 
         return cmd
 
