@@ -1,0 +1,43 @@
+*************************************************************************************************************************************
+
+subscribe to '/serial'
+if $autonomous_mode == True: $publish_avilable = True (allow publishing to '/autonomous_command', msg type: AutonomousCommand)
+1. check if item in $camera_x (x in [1:5], 0 = no camera, 1 = oak camera)
+    if yes: #move_to_oak_camera_center
+    if no: #start_search
+        #start_search:  #do_ballerina: $cmd.angular_z+ , $cmd.linear_z+ slowly --> object detected --> start_stabilization
+
+2. #move_to_oak_camera_center: if msg.camera == 1: do PID until $msg.x == oak.x/2 , $msg.y == oak.y/2 
+                               if msg.camera == 2: $cmd.angular_z+ , $cmd.angular_y+ , slowly until $in_oak
+                               if msg.camera == 3: $cmd.angular_z- , $cmd.angular_y+ , slowly until $in_oak
+                               if msg.camera == 4: $cmd.angular_z+ , $cmd.angular_y- , slowly until $in_oak
+                               if msg.camera == 5: $cmd.angular_z- , $cmd.angular_y- , slowly until $in_oak
+
+3. #move_forward_slowly until width-10 < $msg.width < width+10 or hight-10 < $msg.hight < hight+10
+4. #pos_to_leave_obj: A. check imu readings and return to pitch==0 using $cmd.angular_y-
+                      B. move $cmd.linear_x+50 for 0.25s
+                      C. move $cmd.linear_y+50 for 0.25s (if gripper 2 move $cmd.linear_y-50 for 0.25s)
+                      D. let go of object
+
+*************************************************************************************************************************************
+
+msg types:
+@AutonomousCommand:
+    uint8 linear_x
+    uint8 linear_y
+    uint8 linear_z
+    uint8 angular_x
+    uint8 angular_y
+    uint8 angular_z
+    uint8 gripper       # (0,0,0,0, extend1,open1,extend2,open2)
+
+@ObjectData
+    int16 x
+    int16 y
+    int16 width
+    int16 hight
+    int16 confidence
+    int16 camera
+
+*************************************************************************************************************************************
+
