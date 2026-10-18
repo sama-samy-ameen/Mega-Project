@@ -1,9 +1,7 @@
-
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray, Int16MultiArray
+from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
 from rov_interfaces.msg import MotionCommands
-
 
 class Motion(Node):
     def __init__(self):
