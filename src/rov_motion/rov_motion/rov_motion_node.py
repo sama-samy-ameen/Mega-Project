@@ -9,6 +9,8 @@ class Motion(Node):
     def __init__(self):
         super().__init__("motion_node")
         self.speed = 20
+        self.max_power = 200
+        self.speeds = []
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
 
     def joystick_motion(self, msg:MotionCommands):
@@ -34,11 +36,21 @@ class Motion(Node):
         BBL = (surge - sway - heave + pitch - yaw + roll)
         BBR = (surge + sway - heave + pitch + yaw - roll)
 
-        speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
-        return speeds
+
+
+        self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
+        self.limitting_current()
+        self.get_logger().info(f"{self.speeds}")
+
         
-    def scaling():
-        pass
+        return self.speeds
+        
+    def limitting_current(self):
+        max_val = max(abs(s) for s in self.speeds)
+        if max_val > self.max_power and max_val > 0.0:
+            scale = self.max_power / max_val
+            self.speeds = [s * scale for s in self.speeds]
+            
 
 
 
