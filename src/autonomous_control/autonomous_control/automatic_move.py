@@ -64,7 +64,7 @@ class AutonomousControlNode(Node):
         self.kd = 0.5
         self.last_error = 0.0
         self.dt = 0.1
-        
+
         # Internal PID Error Accumulators
         self.last_error_x = 0.0
         self.last_error_y = 0.0
@@ -142,10 +142,10 @@ class AutonomousControlNode(Node):
         elif self.moved_boosting_step and not self.is_stable_4:
             cmd = self.stop_moving(stability_stage=4)
 
-        elif self.is_stable_4 and not self.finished:
+        if self.is_stable_4 and not self.finished:
             cmd = self.let_go()
 
-
+        cmd.autonomous_mode = self.autonomous_mode
         self.command_pub.publish(cmd)
 
     def start_search(self):
@@ -404,6 +404,7 @@ class AutonomousControlNode(Node):
         cmd.gripper = 0b00_00_00_00  # 1 = Release / Open command signal
 
         self.finished = True
+        self.autonomous_mode = False
         self.get_logger().info('Coral transplantation payload released! Task finished.')
 
         return cmd
