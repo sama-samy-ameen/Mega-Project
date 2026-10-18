@@ -7,3 +7,4 @@ uint8 angular_y
 uint8 angular_z
 
 uint8 gripper       # (0,0,0,0, extend1,open1,extend2,open2)
+bool autonomous_mode
