@@ -28,12 +28,6 @@ class Motion(Node):
         yaw = msg.yaw * self.speed/100
         roll = msg.roll * self.speed
 
-        self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
-        # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
-        # self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
-
-
-
         #simple depth hold logic
         # 1. Toggle Depth Hold whenever R3 is clicked
         if msg.depth_hold:
@@ -61,6 +55,11 @@ class Motion(Node):
         else:
             # Normal pilot manual heave from left stick
             heave = msg.heave * self.speed/100
+
+        self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        # self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+        
 
     def eight_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
         TFR = (surge - sway - heave - pitch + yaw - roll)
