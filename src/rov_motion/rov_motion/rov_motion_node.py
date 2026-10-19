@@ -9,6 +9,8 @@ class Motion(Node):
         self.speed = 20
         self.max_power = 200
         self.speeds = []
+        self.depth_hold_active=False
+        self.target_depth=0.0
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
         self.speed_pub = self.create_publisher(ThrustersSpeeds, "/rov/motion", 10)
         self.pressure_sensor= PressureSensor(bus=1)
@@ -30,7 +32,7 @@ class Motion(Node):
 
         #simple depth hold logic
         # 1. Toggle Depth Hold whenever R3 is clicked
-        if msg.depth_hold:
+        if msg.depth_hold and not self.last_depth_hold:
             self.depth_hold_active = not self.depth_hold_active
 
             if self.depth_hold_active:
@@ -38,6 +40,7 @@ class Motion(Node):
                 self.get_logger().info(
                 f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m"
                 )
+
             else:
                 self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
@@ -142,9 +145,6 @@ class Motion(Node):
         msg.bbl = self.speeds[7]
 
         self.speed_pub.publish(msg)
-
-
-
 
 
 
