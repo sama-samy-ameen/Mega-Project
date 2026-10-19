@@ -31,8 +31,9 @@ class Motion(Node):
         roll = msg.roll * self.speed
 
         #simple depth hold logic
-        # 1. Toggle Depth Hold whenever R3 is clicked
-        if msg.depth_hold and not self.last_depth_hold:
+        #to do : fix overshooting issue here
+        #Toggle Depth Hold whenever R3 is clicked
+        if msg.depth_hold:
             self.depth_hold_active = not self.depth_hold_active
 
             if self.depth_hold_active:
@@ -44,11 +45,11 @@ class Motion(Node):
             else:
                 self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
-          # 2. Control vertical motion:
+          #Control vertical motion:
         if self.depth_hold_active:
             current_depth = self.pressure_sensor.depth()
 
-        # If shallower than target -> push down (-30); if deeper -> push up (+30)
+        #If shallower than target -> push down (-30); if deeper -> push up (+30)
             if current_depth < self.target_depth - 0.05:
                 heave = -30.0
             elif current_depth > self.target_depth + 0.05:
@@ -62,6 +63,9 @@ class Motion(Node):
         self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+
+        self.limiting_current()
+        self.backward_scaling()
         
 
     def eight_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
@@ -124,7 +128,7 @@ class Motion(Node):
             for low, high, factor in segments:
                 if low < s <= high:
                     self.speeds[i] = s * factor
-                    breakcurrent_pressure = self.pressure_sensor.pressure()
+                    break
 
 
 
