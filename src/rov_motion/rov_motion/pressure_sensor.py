@@ -1,6 +1,6 @@
 import time
 
-class PressureSensor(Node):
+class PressureSensor():
     def __init__(self, bus=1):
         self.is_connected = False
         self.sensor= None
