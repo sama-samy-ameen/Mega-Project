@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
-from rov_interfaces.msg import MotionCommands
+from rov_interfaces.msg import MotionCommands, ThrustersSpeeds
 from pressure_sensor import PressureSensor
 
 class Motion(Node):
@@ -11,6 +10,7 @@ class Motion(Node):
         self.max_power = 200
         self.speeds = []
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
+        self.speed_pub = self.create_publisher(ThrustersSpeeds, "/rov/motion", 10)
         self.pressure_sensor= PressureSensor(bus=1)
 
 
@@ -55,10 +55,17 @@ class Motion(Node):
         else:
             # Normal pilot manual heave from left stick
             heave = msg.heave * self.speed/100
-
+        
         self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
+
+        self.limiting_current()
+        self.backward_scaling()
+        for i, s in enumerate(self.speeds):
+            self.speeds[i] = int(s)
+
+        self.speed_publish()
         
 
     def eight_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
@@ -85,11 +92,11 @@ class Motion(Node):
 
         self.speeds = [TFR, TFL, TBR, TBL, BFR, BFL, BBR, BBL]
 
-    def six_thrust_configuration(self, surge, sway, heave, pitch, yaw, roll):
-        TFR = (surge - heave)
-        TFL = (surge - heave)
-        TBR = (heave - pitch)
-        TBL = (heave - pitch)
+    def six_thrust_configuration(self, surge, heave, pitch, yaw):
+        TFR = (surge - heave + yaw)
+        TFL = (surge - heave - yaw)
+        TBR = (heave - pitch + yaw)
+        TBL = (heave - pitch - yaw)
         BFR = (surge + pitch)
         BFL = (surge + pitch)
         BBR = 0
@@ -122,6 +129,19 @@ class Motion(Node):
                 if low < s <= high:
                     self.speeds[i] = s * factor
                     breakcurrent_pressure = self.pressure_sensor.pressure()
+
+    def speed_publish(self):
+        msg = ThrustersSpeeds()
+        msg.tfr = self.speeds[0]
+        msg.tfl = self.speeds[1]
+        msg.tbr = self.speeds[2]
+        msg.tbl = self.speeds[3]
+        msg.bfr = self.speeds[4]
+        msg.bfl = self.speeds[5]
+        msg.bbr = self.speeds[6]
+        msg.bbl = self.speeds[7]
+
+        self.speed_pub.publish(msg)
 
 
 

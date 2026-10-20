@@ -13,6 +13,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotionCommands.msg"
   "msg/ThrusterCommands.msg"
   "msg/ActuatorCommands.msg"
+  "msg/ThrustersSpeeds.msg"
 )
 ament_export_dependencies(rosidl_default_runtime)
 
