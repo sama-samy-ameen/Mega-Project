@@ -45,20 +45,6 @@ class Motion(Node):
             else:
                 self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
-          #Control vertical motion:
-        if self.depth_hold_active:
-            current_depth = self.pressure_sensor.depth()
-
-        #If shallower than target -> push down (-30); if deeper -> push up (+30)
-            if current_depth < self.target_depth - 0.05:
-                heave = -30.0
-            elif current_depth > self.target_depth + 0.05:
-                heave = +30.0
-            else:
-                heave = 0.0
-        else:
-            # Normal pilot manual heave from left stick
-            heave = msg.heave * self.speed/100
 
         self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
