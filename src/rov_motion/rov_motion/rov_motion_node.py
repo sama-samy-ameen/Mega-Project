@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
 from rov_interfaces.msg import MotionCommands
-from pressure_sensor import PressureSensor
+
 
 class Motion(Node):
     def __init__(self):
@@ -12,8 +12,12 @@ class Motion(Node):
         self.speeds = []
         self.depth_hold_active=False
         self.target_depth=0.0
+        self.previous_depth_hold_button=False
+        self.current_depth=None
+        self.last_depth_time=None
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
-        self.pressure_sensor= PressureSensor(bus=1)
+        #create subscription for depth 
+        #create publisher for speeds
 
 
     def joystick_motion(self, msg:MotionCommands):
@@ -33,18 +37,29 @@ class Motion(Node):
         #simple depth hold logic
         #to do : fix overshooting issue here
         #Toggle Depth Hold whenever R3 is clicked
-        if msg.depth_hold:
-            self.depth_hold_active = not self.depth_hold_active
+        if msg.depth_hold and not self.previous_depth_hold_button:
+            if not self.depth_hold_active:
+                if self.current_depth is not None:
+                    self.target_depth=self.current_depth
+                    self.depth_hold_active=True
+                    self.get_logger().info(f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m")
 
-            if self.depth_hold_active:
-                self.target_depth = self.pressure_sensor.depth()
-                self.get_logger().info(
-                f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m"
-                )
+                else:
+                    self.get_logger().warning("Cannot enable depth hold: no depth reading recieved")
 
             else:
+                self.depth_hold_active= False
                 self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
+        self.previous_depth_hold_button=msg.depth_hold
+
+        if self.depth_hold_active and self.current_depth is not None:
+            error = self.current_depth - self.target_depth
+            kp = 50.0  # Initial value to tune
+            correction = kp * error
+
+            correction = max(-40.0, min(40.0, correction))
+            heave = correction
 
         self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
@@ -115,6 +130,11 @@ class Motion(Node):
                 if low < s <= high:
                     self.speeds[i] = s * factor
                     break
+
+    def depth_callback(self, msg):
+        self.current_depth = msg.data
+        self.last_depth_time = self.get_clock().now()
+
 
 
 
