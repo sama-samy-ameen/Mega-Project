@@ -1,9 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rov_interfaces.msg import MotionCommands, ThrustersSpeeds
-from pressure_sensor import PressureSensor
-from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
-from rov_interfaces.msg import MotionCommands, ThrustersSpeeds
+from std_msgs.msg import Float32MultiArray
 
 
 class Motion(Node):
@@ -19,6 +17,7 @@ class Motion(Node):
         self.last_depth_time=None
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
         #create subscription for depth 
+        self.create_subscription(Float32MultiArray, "/rov/serial", self.depth_callback, 10)
         self.speed_pub = self.create_publisher(ThrustersSpeeds, "/rov/motion", 10)
 
 
@@ -137,9 +136,10 @@ class Motion(Node):
                     self.speeds[i] = s * factor
                     break
 
-    def depth_callback(self, msg):
-        self.current_depth = msg.data
-        self.last_depth_time = self.get_clock().now()
+    def depth_callback(self, msg: Float32MultiArray):
+        if len(msg.data) >= 3:
+            self.current_depth = msg.data[2]
+            self.last_depth_time = self.get_clock().now()
 
     def speed_publish(self):
         msg = ThrustersSpeeds()
