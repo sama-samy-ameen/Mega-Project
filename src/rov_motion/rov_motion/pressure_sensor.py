@@ -1,6 +1,6 @@
 import time
 
-class PressureSensor(Node):
+class PressureSensor:
     def __init__(self, bus=1):
         self.is_connected = False
         self.sensor= None
@@ -8,12 +8,16 @@ class PressureSensor(Node):
         try:
             import ms5837
             self.sensor= ms5837.MS5837_30BA(bus)
+
             if self.sensor.init():
                 self.sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
                 self.is_connected=True
         except Exception:
             self.is_connected=False
 
+        if not self.is_connected:
+            print("Pressure Sensor is not connected, returning fallack values..")
+            
     def depth(self):
 
         if self.is_connected and self.sensor is not None:
@@ -52,31 +56,6 @@ class PressureSensor(Node):
 
 
 
-# class PressureSensor(Node):
-#     def __init__(self, bus=1, default_depth=30):
-#         self.bus = bus
-#         self.default_depth=float(default_depth)
-#         self.is_connected= False
-#         self.sensor= None
 
-#         try:
-#             self.sensor=ms5837.MS5837_30BA(bus)
-#             if self.sensor.init():
-#                 self.sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-#                 self.is_connected=True
-#         except Exception:
-#             self.is_connected=False
-
-
-#     def read_depth(self):
-#         if self.is_connected and self.sensor is not None:
-#             try:
-#                 if self.sensor.read_depth():
-#                     return round(float(self.sensor.depth()),3)
-#             except Exception:
-#                 pass
-#             return self.default_depth
-
-#     def read_pressure()
 
 

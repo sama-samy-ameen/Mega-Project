@@ -2,6 +2,9 @@ import rclpy
 from rclpy.node import Node
 from rov_interfaces.msg import MotionCommands, ThrustersSpeeds
 from pressure_sensor import PressureSensor
+from std_msgs.msg import Float32MultiArray, Int16MultiArray, Float32
+from rov_interfaces.msg import MotionCommands, ThrustersSpeeds
+
 
 class Motion(Node):
     def __init__(self):
@@ -9,9 +12,14 @@ class Motion(Node):
         self.speed = 20
         self.max_power = 200
         self.speeds = []
+        self.depth_hold_active=False
+        self.target_depth=0.0
+        self.previous_depth_hold_button=False
+        self.current_depth=None
+        self.last_depth_time=None
         self.create_subscription(MotionCommands, "/joystick_motion", self.joystick_motion, 10)
+        #create subscription for depth 
         self.speed_pub = self.create_publisher(ThrustersSpeeds, "/rov/motion", 10)
-        self.pressure_sensor= PressureSensor(bus=1)
 
 
     def joystick_motion(self, msg:MotionCommands):
@@ -29,33 +37,32 @@ class Motion(Node):
         roll = msg.roll * self.speed
 
         #simple depth hold logic
-        # 1. Toggle Depth Hold whenever R3 is clicked
-        if msg.depth_hold:
-            self.depth_hold_active = not self.depth_hold_active
+        #to do : fix overshooting issue here
+        #Toggle Depth Hold whenever R3 is clicked
+        if msg.depth_hold and not self.previous_depth_hold_button:
+            if not self.depth_hold_active:
+                if self.current_depth is not None:
+                    self.target_depth=self.current_depth
+                    self.depth_hold_active=True
+                    self.get_logger().info(f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m")
 
-            if self.depth_hold_active:
-                self.target_depth = self.pressure_sensor.depth()
-                self.get_logger().info(
-                f"==> Depth Hold ON: Locked at {self.target_depth:.2f} m"
-                )
+                else:
+                    self.get_logger().warning("Cannot enable depth hold: no depth reading recieved")
+
             else:
+                self.depth_hold_active= False
                 self.get_logger().info("==> Depth Hold OFF: Manual mode")
 
-          # 2. Control vertical motion:
-        if self.depth_hold_active:
-            current_depth = self.pressure_sensor.depth()
+        self.previous_depth_hold_button=msg.depth_hold
 
-        # If shallower than target -> push down (-30); if deeper -> push up (+30)
-            if current_depth < self.target_depth - 0.05:
-                heave = -30.0
-            elif current_depth > self.target_depth + 0.05:
-                heave = +30.0
-            else:
-                heave = 0.0
-        else:
-            # Normal pilot manual heave from left stick
-            heave = msg.heave * self.speed/100
-        
+        if self.depth_hold_active and self.current_depth is not None:
+            error = self.current_depth - self.target_depth
+            kp = 50.0  # Initial value to tune
+            correction = kp * error
+
+            correction = max(-40.0, min(40.0, correction))
+            heave = correction
+
         self.eight_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.seven_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
         # self.six_thrust_configuration(surge, sway, heave, pitch, yaw, roll)
@@ -128,7 +135,11 @@ class Motion(Node):
             for low, high, factor in segments:
                 if low < s <= high:
                     self.speeds[i] = s * factor
-                    breakcurrent_pressure = self.pressure_sensor.pressure()
+                    break
+
+    def depth_callback(self, msg):
+        self.current_depth = msg.data
+        self.last_depth_time = self.get_clock().now()
 
     def speed_publish(self):
         msg = ThrustersSpeeds()
@@ -142,8 +153,6 @@ class Motion(Node):
         msg.bbl = self.speeds[7]
 
         self.speed_pub.publish(msg)
-
-
 
 
 
