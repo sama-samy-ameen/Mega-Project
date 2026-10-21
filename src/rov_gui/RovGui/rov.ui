@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1600</width>
+    <width>1651</width>
     <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ROV Telemetry Dashboard</string>
+   <string>ROV Control Station</string>
   </property>
   <property name="styleSheet">
    <string notr="true">
@@ -26,10 +26,23 @@ QProgressBar { border: 1px solid #2a3647; border-radius: 3px; background-color: 
 QProgressBar::chunk { background-color: #2f81f7; border-radius: 2px; }
 QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_cam4 {
     background-color: #05080c; color: #4b5a6e; border: 1px solid #2a3647; font-size: 12pt; }
+QListWidget { background-color: #0b0f14; color: #d7dee8; border: 1px solid #2a3647;
+              border-radius: 4px; font-size: 10pt; }
+QListWidget::item { padding: 4px; }
+QPlainTextEdit { background-color: #0b0f14; color: #9fb3c8; border: 1px solid #2a3647;
+                 border-radius: 4px; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 9pt; }
+QDoubleSpinBox { background-color: #0b0f14; color: #7CFC9A; border: 1px solid #2a3647;
+                 border-radius: 3px; padding: 2px 4px; font-size: 10pt; }
+QPushButton { background-color: #263040; color: #d7dee8; border: 1px solid #2a3647;
+              border-radius: 4px; padding: 4px 10px; }
+QPushButton:hover { background-color: #2f3d52; }
+QPushButton:pressed { background-color: #2f81f7; }
+QTimeEdit { background-color: #0b0f14; color: #7CFC9A; border: 1px solid #2a3647;
+            border-radius: 3px; padding: 2px 4px; font-size: 10pt; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="rootLayout" stretch="0,1,0">
+   <layout class="QVBoxLayout" name="rootLayout" stretch="0,1">
     <property name="spacing">
      <number>8</number>
     </property>
@@ -72,7 +85,7 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
           <string notr="true">color: #ffffff; font-size: 18pt; font-weight: bold;</string>
          </property>
          <property name="text">
-          <string>ROV TELEMETRY</string>
+          <string>ROV CONTROL STATION</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -109,7 +122,7 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="mainLayout" stretch="3,1">
+     <layout class="QHBoxLayout" name="mainLayout" stretch="6,3">
       <property name="spacing">
        <number>8</number>
       </property>
@@ -126,276 +139,7 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
        <number>0</number>
       </property>
       <item>
-       <widget class="QGroupBox" name="gb_cameras">
-        <property name="title">
-         <string>Cameras</string>
-        </property>
-        <layout class="QGridLayout" name="cameraGrid" rowstretch="1,1" columnstretch="2,1,1">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
-          <number>10</number>
-         </property>
-         <property name="spacing">
-          <number>8</number>
-         </property>
-         <item row="0" column="0" rowspan="2">
-          <widget class="QGroupBox" name="gb_oakd">
-           <property name="title">
-            <string>OAK-D</string>
-           </property>
-           <layout class="QVBoxLayout" name="gb_oakd_layout">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lbl_oakd">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>480</width>
-                <height>340</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>NO SIGNAL</string>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QGroupBox" name="gb_cam1">
-           <property name="title">
-            <string>Camera 1</string>
-           </property>
-           <layout class="QVBoxLayout" name="gb_cam1_layout">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lbl_cam1">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>220</width>
-                <height>140</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>NO SIGNAL</string>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QGroupBox" name="gb_cam2">
-           <property name="title">
-            <string>Camera 2</string>
-           </property>
-           <layout class="QVBoxLayout" name="gb_cam2_layout">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lbl_cam2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>220</width>
-                <height>140</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>NO SIGNAL</string>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QGroupBox" name="gb_cam3">
-           <property name="title">
-            <string>Camera 3</string>
-           </property>
-           <layout class="QVBoxLayout" name="gb_cam3_layout">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lbl_cam3">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>220</width>
-                <height>140</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>NO SIGNAL</string>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QGroupBox" name="gb_cam4">
-           <property name="title">
-            <string>Camera 4</string>
-           </property>
-           <layout class="QVBoxLayout" name="gb_cam4_layout">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lbl_cam4">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>220</width>
-                <height>140</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>NO SIGNAL</string>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="sideLayout">
+       <layout class="QVBoxLayout" name="leftColumn" stretch="1,0">
         <property name="spacing">
          <number>8</number>
         </property>
@@ -412,38 +156,288 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="statusRowLayout" stretch="">
-          <property name="spacing">
-           <number>8</number>
+         <widget class="QGroupBox" name="gb_cameras">
+          <property name="title">
+           <string>Cameras</string>
           </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-         </layout>
+          <layout class="QGridLayout" name="cameraGrid" rowstretch="1,1" columnstretch="2,1,1">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <property name="spacing">
+            <number>8</number>
+           </property>
+           <item row="0" column="0" rowspan="2">
+            <widget class="QGroupBox" name="gb_oakd">
+             <property name="title">
+              <string>OAK-D</string>
+             </property>
+             <layout class="QVBoxLayout" name="gb_oakd_layout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>6</number>
+              </property>
+              <property name="topMargin">
+               <number>6</number>
+              </property>
+              <property name="rightMargin">
+               <number>6</number>
+              </property>
+              <property name="bottomMargin">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lbl_oakd">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>360</width>
+                  <height>300</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>NO SIGNAL</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QGroupBox" name="gb_cam1">
+             <property name="title">
+              <string>Camera 1</string>
+             </property>
+             <layout class="QVBoxLayout" name="gb_cam1_layout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>6</number>
+              </property>
+              <property name="topMargin">
+               <number>6</number>
+              </property>
+              <property name="rightMargin">
+               <number>6</number>
+              </property>
+              <property name="bottomMargin">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lbl_cam1">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>170</width>
+                  <height>120</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>NO SIGNAL</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QGroupBox" name="gb_cam2">
+             <property name="title">
+              <string>Camera 2</string>
+             </property>
+             <layout class="QVBoxLayout" name="gb_cam2_layout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>6</number>
+              </property>
+              <property name="topMargin">
+               <number>6</number>
+              </property>
+              <property name="rightMargin">
+               <number>6</number>
+              </property>
+              <property name="bottomMargin">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lbl_cam2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>170</width>
+                  <height>120</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>NO SIGNAL</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QGroupBox" name="gb_cam3">
+             <property name="title">
+              <string>Camera 3</string>
+             </property>
+             <layout class="QVBoxLayout" name="gb_cam3_layout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>6</number>
+              </property>
+              <property name="topMargin">
+               <number>6</number>
+              </property>
+              <property name="rightMargin">
+               <number>6</number>
+              </property>
+              <property name="bottomMargin">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lbl_cam3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>170</width>
+                  <height>120</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>NO SIGNAL</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QGroupBox" name="gb_cam4">
+             <property name="title">
+              <string>Camera 4</string>
+             </property>
+             <layout class="QVBoxLayout" name="gb_cam4_layout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>6</number>
+              </property>
+              <property name="topMargin">
+               <number>6</number>
+              </property>
+              <property name="rightMargin">
+               <number>6</number>
+              </property>
+              <property name="bottomMargin">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lbl_cam4">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>170</width>
+                  <height>120</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>NO SIGNAL</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="gb_imu">
-          <property name="minimumSize">
+         <widget class="QGroupBox" name="gb_thrusters">
+          <property name="maximumSize">
            <size>
-            <width>400</width>
-            <height>0</height>
+            <width>16777215</width>
+            <height>230</height>
            </size>
           </property>
           <property name="title">
-           <string>IMU – MPU-9255</string>
+           <string>Thrusters (output %)</string>
           </property>
-          <layout class="QVBoxLayout" name="imuLayout">
+          <layout class="QHBoxLayout" name="thrusterLayout">
            <property name="spacing">
-            <number>8</number>
+            <number>10</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
@@ -458,7 +452,10 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
             <number>10</number>
            </property>
            <item>
-            <layout class="QGridLayout" name="imuVectorGrid">
+            <layout class="QVBoxLayout" name="thruster1_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -471,211 +468,63 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="lbl_hdr_vec">
+             <item>
+              <widget class="QLabel" name="lbl_thr1_name">
                <property name="styleSheet">
-                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
                </property>
                <property name="text">
-                <string/>
+                <string>TFL</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="lbl_hdr_x">
-               <property name="styleSheet">
-                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr1">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
                </property>
-               <property name="text">
-                <string>X</string>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
                </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
+               <property name="minimum">
+                <number>-100</number>
                </property>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="lbl_hdr_y">
-               <property name="styleSheet">
-                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               <property name="maximum">
+                <number>100</number>
                </property>
-               <property name="text">
-                <string>Y</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="lbl_hdr_z">
-               <property name="styleSheet">
-                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
-               </property>
-               <property name="text">
-                <string>Z</string>
+               <property name="value">
+                <number>0</number>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="lbl_row_acc">
-               <property name="styleSheet">
-                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               <property name="textVisible">
+                <bool>false</bool>
                </property>
-               <property name="text">
-                <string>Accel (m/s²)</string>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
                </property>
-               <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               <property name="format">
+                <string>%p%</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="lbl_imu_acc_x">
+             <item>
+              <widget class="QLabel" name="lbl_thr1_value">
                <property name="styleSheet">
                 <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
                </property>
                <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QLabel" name="lbl_imu_acc_y">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QLabel" name="lbl_imu_acc_z">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="lbl_row_gyr">
-               <property name="styleSheet">
-                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
-               </property>
-               <property name="text">
-                <string>Gyro (°/s)</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="lbl_imu_gyr_x">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QLabel" name="lbl_imu_gyr_y">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="3">
-              <widget class="QLabel" name="lbl_imu_gyr_z">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="lbl_row_mag">
-               <property name="styleSheet">
-                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
-               </property>
-               <property name="text">
-                <string>Mag (µT)</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="lbl_imu_mag_x">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QLabel" name="lbl_imu_mag_y">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="3">
-              <widget class="QLabel" name="lbl_imu_mag_z">
-               <property name="styleSheet">
-                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-               </property>
-               <property name="text">
-                <string>0.00</string>
+                <string>0</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -685,9 +534,9 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="imuTempLayout">
+            <layout class="QVBoxLayout" name="thruster2_layout">
              <property name="spacing">
-              <number>8</number>
+              <number>4</number>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -702,38 +551,62 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
               <number>0</number>
              </property>
              <item>
-              <widget class="QLabel" name="lbl_row_temp">
+              <widget class="QLabel" name="lbl_thr2_name">
                <property name="styleSheet">
-                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
                </property>
                <property name="text">
-                <string>Temperature</string>
+                <string>TFR</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr2">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
                </property>
               </widget>
              </item>
              <item>
-              <spacer name="tempSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="lbl_imu_temp">
+              <widget class="QLabel" name="lbl_thr2_value">
                <property name="styleSheet">
                 <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
                </property>
                <property name="text">
-                <string>0.0 °C</string>
+                <string>0</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -742,15 +615,778 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
              </item>
             </layout>
            </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster3_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr3_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>BFL</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr3">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr3_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster4_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr4_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>BFR</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr4">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr4_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster5_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr5_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>TBL</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr5">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr5_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster6_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr6_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>TBR</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr6">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr6_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster7_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr7_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>BBL</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr7">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr7_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="thruster8_layout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lbl_thr8_name">
+               <property name="styleSheet">
+                <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>BBR</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QProgressBar" name="bar_thr8">
+               <property name="minimumSize">
+                <size>
+                 <width>26</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="format">
+                <string>%p%</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_thr8_value">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="gb_timers">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>230</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Timers</string>
+             </property>
+             <layout class="QVBoxLayout" name="timersLayout">
+              <property name="spacing">
+               <number>8</number>
+              </property>
+              <property name="leftMargin">
+               <number>10</number>
+              </property>
+              <property name="topMargin">
+               <number>10</number>
+              </property>
+              <property name="rightMargin">
+               <number>10</number>
+              </property>
+              <property name="bottomMargin">
+               <number>10</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="timesRow">
+                <property name="spacing">
+                 <number>10</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QVBoxLayout" name="trialTimerLayout">
+                  <property name="spacing">
+                   <number>2</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lbl_trial_title">
+                    <property name="styleSheet">
+                     <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+                    </property>
+                    <property name="text">
+                     <string>Trial time left</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lbl_trial_time">
+                    <property name="styleSheet">
+                     <string notr="true">color: #ffffff; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 30pt; font-weight: bold;</string>
+                    </property>
+                    <property name="text">
+                     <string>00:00</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="missionTimerLayout">
+                  <property name="spacing">
+                   <number>2</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lbl_mission_title">
+                    <property name="styleSheet">
+                     <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+                    </property>
+                    <property name="text">
+                     <string>Mission time left</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lbl_mission_time">
+                    <property name="styleSheet">
+                     <string notr="true">color: #ffffff; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 30pt; font-weight: bold;</string>
+                    </property>
+                    <property name="text">
+                     <string>00:00</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="missionControlRow">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="trial_row_duration">
+                  <property name="styleSheet">
+                   <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Trial duration</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTimeEdit" name="time_trial_duration">
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="displayFormat">
+                   <string>mm:ss</string>
+                  </property>
+                  <property name="time">
+                   <time>
+                    <hour>0</hour>
+                    <minute>5</minute>
+                    <second>0</second>
+                   </time>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="lbl_row_duration">
+                  <property name="styleSheet">
+                   <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Mission duration</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTimeEdit" name="time_mission_duration">
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="displayFormat">
+                   <string>mm:ss</string>
+                  </property>
+                  <property name="time">
+                   <time>
+                    <hour>0</hour>
+                    <minute>5</minute>
+                    <second>0</second>
+                   </time>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="controlRowSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>10</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_mission_start">
+                  <property name="text">
+                   <string>Start</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_mission_pause">
+                  <property name="text">
+                   <string>Pause</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btn_mission_reset">
+                  <property name="text">
+                   <string>Reset</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="rightColumn">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
-         <widget class="QGroupBox" name="gb_arms">
+         <widget class="QGroupBox" name="gb_status">
           <property name="title">
-           <string>Robotic Arms</string>
+           <string>Status</string>
           </property>
-          <layout class="QVBoxLayout" name="armsLayout">
+          <layout class="QVBoxLayout" name="statusLayout">
            <property name="spacing">
             <number>6</number>
            </property>
@@ -767,7 +1403,636 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
             <number>10</number>
            </property>
            <item>
-            <layout class="QGridLayout" name="armsGrid">
+            <layout class="QGridLayout" name="statusGrid" columnstretch="0,0,1">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lbl_row_mode">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Mode</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="lbl_mode_indicator">
+               <property name="styleSheet">
+                <string notr="true">color: #3a4656; font-size: 24pt;</string>
+               </property>
+               <property name="text">
+                <string>●</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lbl_mode_state">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 12pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>MANUAL</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lbl_row_light">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Light (LED)</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lbl_light_indicator">
+               <property name="styleSheet">
+                <string notr="true">color: #3a4656; font-size: 24pt;</string>
+               </property>
+               <property name="text">
+                <string>●</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="lbl_light_state">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 12pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>OFF</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="lbl_row_motion">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Motion</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="2">
+              <widget class="QLabel" name="lbl_motion_state">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 12pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="gb_orientation">
+          <property name="title">
+           <string>Orientation / Depth</string>
+          </property>
+          <layout class="QVBoxLayout" name="orientationLayout">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <layout class="QGridLayout" name="orientationGrid">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lbl_hdr_roll">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Roll</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lbl_roll">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 14pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>0.0°</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="lbl_hdr_pitch">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Pitch</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lbl_pitch">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 14pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>0.0°</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lbl_hdr_yaw">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Yaw</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="lbl_yaw">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 14pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>0.0°</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLabel" name="lbl_hdr_depth">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Depth</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QLabel" name="lbl_depth">
+               <property name="styleSheet">
+                <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 14pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>0.00 m</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="gb_grippers">
+          <property name="title">
+           <string>Grippers</string>
+          </property>
+          <layout class="QVBoxLayout" name="grippersLayout">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <layout class="QGridLayout" name="grippersGrid" columnstretch="1,2,2">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lbl_hdr_grippers">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="lbl_hdr_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Extend</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lbl_hdr_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>Open</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lbl_gripper1_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 1</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lbl_gripper1_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="lbl_gripper1_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="lbl_gripper2_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 2</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="lbl_gripper2_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="lbl_gripper2_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="lbl_gripper3_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 3</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="lbl_gripper3_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QLabel" name="lbl_gripper3_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="lbl_gripper4_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 4</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QLabel" name="lbl_gripper4_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QLabel" name="lbl_gripper4_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="lbl_gripper5_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 5</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QLabel" name="lbl_gripper5_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="2">
+              <widget class="QLabel" name="lbl_gripper5_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="lbl_gripper6_name">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Gripper 6</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QLabel" name="lbl_gripper6_extend">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="2">
+              <widget class="QLabel" name="lbl_gripper6_open">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-weight: bold; background-color: #263040; border: 1px solid #2a3647; border-radius: 4px; padding: 2px 6px;</string>
+               </property>
+               <property name="text">
+                <string>--</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="gb_control">
+          <property name="title">
+           <string>Control System</string>
+          </property>
+          <layout class="QVBoxLayout" name="controlLayout">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <layout class="QHBoxLayout" name="controlStatusLayout">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+            </layout>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="pidGrid">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -784,25 +2049,25 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
               <number>6</number>
              </property>
              <item row="0" column="0">
-              <widget class="QLabel" name="lbl_hdr_arms">
+              <widget class="QLabel" name="lbl_hdr_pid">
                <property name="styleSheet">
                 <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
                </property>
                <property name="text">
-                <string/>
+                <string>PID gains</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QLabel" name="lbl_hdr_arm1">
+              <widget class="QLabel" name="lbl_hdr_p">
                <property name="styleSheet">
                 <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
                </property>
                <property name="text">
-                <string>Arm 1</string>
+                <string>P</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -810,12 +2075,25 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
               </widget>
              </item>
              <item row="0" column="2">
-              <widget class="QLabel" name="lbl_hdr_arm2">
+              <widget class="QLabel" name="lbl_hdr_i">
                <property name="styleSheet">
                 <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
                </property>
                <property name="text">
-                <string>Arm 2</string>
+                <string>I</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLabel" name="lbl_hdr_d">
+               <property name="styleSheet">
+                <string notr="true">color: #8a97a8; font-size: 9pt; font-weight: bold;</string>
+               </property>
+               <property name="text">
+                <string>D</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -823,25 +2101,12 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="lbl_row_ext">
+              <widget class="QLabel" name="lbl_row_yaw">
                <property name="styleSheet">
                 <string notr="true">color: #d7dee8; font-size: 10pt;</string>
                </property>
                <property name="text">
-                <string>Extension</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="lbl_row_grip_open">
-               <property name="styleSheet">
-                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
-               </property>
-               <property name="text">
-                <string>Gripper opening</string>
+                <string>Yaw</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -849,90 +2114,147 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QProgressBar" name="bar_arm1_extension">
-               <property name="minimum">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>0</number>
-               </property>
+              <widget class="QDoubleSpinBox" name="spin_yaw_p">
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
-               <property name="textVisible">
-                <bool>true</bool>
+               <property name="keyboardTracking">
+                <bool>false</bool>
                </property>
-               <property name="format">
-                <string>%p%</string>
+               <property name="decimals">
+                <number>3</number>
                </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QProgressBar" name="bar_arm1_gripper">
                <property name="minimum">
-                <number>0</number>
+                <double>0.000000000000000</double>
                </property>
                <property name="maximum">
-                <number>100</number>
+                <double>1000.000000000000000</double>
                </property>
-               <property name="value">
-                <number>0</number>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="textVisible">
-                <bool>true</bool>
-               </property>
-               <property name="format">
-                <string>%p%</string>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
                </property>
               </widget>
              </item>
              <item row="1" column="2">
-              <widget class="QProgressBar" name="bar_arm2_extension">
-               <property name="minimum">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>0</number>
-               </property>
+              <widget class="QDoubleSpinBox" name="spin_yaw_i">
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
-               <property name="textVisible">
-                <bool>true</bool>
+               <property name="keyboardTracking">
+                <bool>false</bool>
                </property>
-               <property name="format">
-                <string>%p%</string>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QDoubleSpinBox" name="spin_yaw_d">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="keyboardTracking">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="lbl_row_pitch">
+               <property name="styleSheet">
+                <string notr="true">color: #d7dee8; font-size: 10pt;</string>
+               </property>
+               <property name="text">
+                <string>Pitch</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="spin_pitch_p">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="keyboardTracking">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
                </property>
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QProgressBar" name="bar_arm2_gripper">
-               <property name="minimum">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>0</number>
-               </property>
+              <widget class="QDoubleSpinBox" name="spin_pitch_i">
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
-               <property name="textVisible">
-                <bool>true</bool>
+               <property name="keyboardTracking">
+                <bool>false</bool>
                </property>
-               <property name="format">
-                <string>%p%</string>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3">
+              <widget class="QDoubleSpinBox" name="spin_pitch_d">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="keyboardTracking">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
                </property>
               </widget>
              </item>
@@ -942,13 +2264,13 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="gb_light">
+         <widget class="QGroupBox" name="gb_mission">
           <property name="title">
-           <string>Light</string>
+           <string>Autonomous Steps</string>
           </property>
-          <layout class="QHBoxLayout" name="lightLayout">
+          <layout class="QVBoxLayout" name="missionLayout">
            <property name="spacing">
-            <number>8</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
@@ -963,28 +2285,28 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
             <number>10</number>
            </property>
            <item>
-            <widget class="QLabel" name="lbl_light_indicator">
+            <widget class="QLabel" name="lbl_mission_name">
              <property name="styleSheet">
-              <string notr="true">color: #3a4656; font-size: 28pt;</string>
+              <string notr="true">color: #8fb4ff; font-size: 12pt; font-weight: bold;</string>
              </property>
              <property name="text">
-              <string>●</string>
+              <string>No task selected</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="lbl_light_state">
-             <property name="styleSheet">
-              <string notr="true">color: #d7dee8; font-size: 12pt; font-weight: bold;</string>
+            <widget class="QListWidget" name="list_steps">
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
              </property>
-             <property name="text">
-              <string>OFF</string>
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
              </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::NoSelection</enum>
              </property>
             </widget>
            </item>
@@ -992,57 +2314,7 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="gb_mode">
-          <property name="title">
-           <string>Mode</string>
-          </property>
-          <layout class="QHBoxLayout" name="modeLayout">
-           <property name="spacing">
-            <number>8</number>
-           </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
-            <number>10</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="lbl_mode_indicator">
-             <property name="styleSheet">
-              <string notr="true">color: #3a4656; font-size: 28pt;</string>
-             </property>
-             <property name="text">
-              <string>●</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="lbl_mode_state">
-             <property name="styleSheet">
-              <string notr="true">color: #d7dee8; font-size: 12pt; font-weight: bold;</string>
-             </property>
-             <property name="text">
-              <string>MANUAL</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <spacer name="sideSpacer">
+         <spacer name="rightSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
@@ -1057,692 +2329,6 @@ QLabel#lbl_oakd, QLabel#lbl_cam1, QLabel#lbl_cam2, QLabel#lbl_cam3, QLabel#lbl_c
        </layout>
       </item>
      </layout>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="gb_thrusters">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>260</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Thrusters (output %)</string>
-      </property>
-      <layout class="QHBoxLayout" name="thrusterLayout">
-       <property name="spacing">
-        <number>14</number>
-       </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
-        <number>10</number>
-       </property>
-       <item>
-        <layout class="QVBoxLayout" name="thruster1_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr1_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T1</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr1">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr1_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster2_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr2_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T2</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr2">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr2_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster3_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr3_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T3</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr3">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr3_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster4_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr4_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T4</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr4">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr4_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster5_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr5_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T5</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr5">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr5_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster6_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr6_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T6</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr6">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr6_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster7_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr7_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T7</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr7">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr7_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="thruster8_layout">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lbl_thr8_name">
-           <property name="styleSheet">
-            <string notr="true">color: #8fb4ff; font-size: 11pt; font-weight: bold;</string>
-           </property>
-           <property name="text">
-            <string>T8</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QProgressBar" name="bar_thr8">
-           <property name="minimumSize">
-            <size>
-             <width>28</width>
-             <height>110</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>40</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="minimum">
-            <number>-100</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>false</bool>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="format">
-            <string>%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lbl_thr8_value">
-           <property name="styleSheet">
-            <string notr="true">color: #7CFC9A; font-family: 'Consolas','DejaVu Sans Mono',monospace; font-size: 11pt;</string>
-           </property>
-           <property name="text">
-            <string>0 %</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
     </item>
    </layout>
   </widget>
