@@ -45,8 +45,8 @@ def build_command_packet(
 ) -> bytes:
     if len(pwms) != 8:
         raise ValueError("exactly eight thruster PWM values are required")
-    if any(pulse < 1100 or pulse > 1900 for pulse in pwms):
-        raise ValueError("thruster PWM values must be in the 1100-1900 us range")
+    if any(pulse < 1300 or pulse > 1700 for pulse in pwms):
+        raise ValueError("thruster PWM values must be in the 1300-1700 us range")
     body = bytes((sequence & 0xFF, int(armed)))
     body += struct.pack("<8H", *pwms)
     body += bytes((actuator_flags & 0xFF,))
@@ -68,9 +68,11 @@ class ROVSerialBridge(Node):
         self.imu_publisher = self.create_publisher(Float32MultiArray, "/rov/imu", 10)
         self.depth_publisher = self.create_publisher(Float32, "/rov/depth", 10)
         self.armed_publisher = self.create_publisher(Bool, "/rov/armed", 10)
+    
         self.create_subscription(Int32MultiArray, "/rov/motion", self.motion_callback, 10)
         self.create_subscription(Int32MultiArray, "/rov/actuators", self.states_callback, 10)
         self.create_subscription(Bool, "/rov/arm", self.arm_callback, 10)
+        
 
         self.latest_pwms = [NEUTRAL_PWM] * 8
         self.actuator_flags = 0
@@ -155,8 +157,6 @@ class ROVSerialBridge(Node):
     def handle_line(self, line: str) -> None:
         if line.startswith("D,"):
             self.handle_imu(line)
-        elif line.startswith("P,"):
-            self.handle_pressure(line)
         elif line.startswith("ACK,"):
             self.handle_ack(line)
         elif line.startswith("STATE,DISARMED"):
@@ -208,12 +208,29 @@ class ROVSerialBridge(Node):
 
     def motion_callback(self, message: Int32MultiArray) -> None:
         if len(message.data) != 8:
-            self.get_logger().warning("/rov/motion must contain exactly 8 signed motor values")
+            self.get_logger().warning("/rov/motion must contain exactly 8 PWM values")
             return
         if any(value < -MOTION_OFFSET_LIMIT or value > MOTION_OFFSET_LIMIT for value in message.data):
             self.get_logger().warning("Rejected /rov/motion value outside -200..200")
             return
-        self.latest_pwms = [NEUTRAL_PWM + int(value) for value in message.data]
+
+        packed_thrusters = []
+
+        for val in message.data:
+            # 1. Add 1500 to the incoming value to get the absolute PWM (1300 - 1700 range)
+            pwm = val + 1500
+
+            # 2. Safety Clamp: Ensure PWM never goes outside safe ESC limits (1300 to 1700 µs)
+            pwm = max(1300, min(1700, pwm))
+
+            # 3. Convert PWM to a single byte (0 to 255)
+            # Formula: (pwm - min_pwm) * 255 / (max_pwm - min_pwm)
+            byte_val = int((pwm - 1300) * 255 / 400)
+            
+            # Clamp the byte just to be mathematically safe
+            byte_val = max(0, min(255, byte_val))
+            
+            packed_thrusters.append(byte_val)
         self.last_motion_time = time.monotonic()
 
     def states_callback(self, message: Int32MultiArray) -> None:
