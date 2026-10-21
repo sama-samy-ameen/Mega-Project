@@ -115,12 +115,7 @@ class AttitudeEKF(Node):
             float(angles_deg[0]),
             float(angles_deg[2]) if yaw_enabled else 0.0,
         ]
-        self.publisher.publis
-        self.get_logger().warning("ARM requested")
-
-    # ------------------------------------------------------- writing to Nano
-
-    def send_command_packet(self) -> None:h(output)
+        self.publisher.publish(output)
 
     def warn_throttled(self, text: str) -> None:
         now = time.monotonic()
