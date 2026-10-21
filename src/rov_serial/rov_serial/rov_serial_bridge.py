@@ -13,7 +13,7 @@ import time
 import rclpy
 import serial
 from rclpy.node import Node
-from std_msgs.msg import Bool, Float32MultiArray, Int32MultiArray
+from std_msgs.msg import Bool, Float32, Float32MultiArray, Int32MultiArray
 
 
 SYNC = b"\xA5\x5A"
@@ -65,6 +65,10 @@ class ROVSerialBridge(Node):
         )
 
         self.imu_publisher = self.create_publisher(Float32MultiArray, "/rov/imu", 10)
+        self.depth_publisher = self.create_publisher(Float32, "/rov/depth", 10)
+        self.pressure_temperature_publisher = self.create_publisher(
+            Float32, "/rov/pressure_temperature", 10
+        )
         self.armed_publisher = self.create_publisher(Bool, "/rov/armed", 10)
         self.create_subscription(Int32MultiArray, "/rov/motion", self.motion_callback, 10)
         self.create_subscription(Int32MultiArray, "/rov/actuators", self.states_callback, 10)
@@ -153,6 +157,8 @@ class ROVSerialBridge(Node):
     def handle_line(self, line: str) -> None:
         if line.startswith("D,"):
             self.handle_imu(line)
+        elif line.startswith("P,"):
+            self.handle_pressure(line)
         elif line.startswith("ACK,"):
             self.handle_ack(line)
         elif line.startswith("STATE,DISARMED"):
@@ -187,6 +193,19 @@ class ROVSerialBridge(Node):
         message = Float32MultiArray()
         message.data = values
         self.imu_publisher.publish(message)
+
+    def handle_pressure(self, line: str) -> None:
+        fields = line.split(",")
+        if len(fields) != 3:
+            return
+        try:
+            depth_m, temperature_c = (float(value) for value in fields[1:])
+        except ValueError:
+            return
+        if not math.isfinite(depth_m) or not math.isfinite(temperature_c):
+            return
+        self.depth_publisher.publish(Float32(data=depth_m))
+        self.pressure_temperature_publisher.publish(Float32(data=temperature_c))
 
     # ---------------------------------------------------------- ROS callbacks
 

@@ -1,5 +1,6 @@
 #include <MPU6500-DMP.h>
 #include <Servo.h>
+#include <Wire.h>
 #include <avr/wdt.h>   // AVR boards only (Nano/Uno/Mega)
 #include <stdlib.h>
 #include <string.h>
@@ -15,12 +16,22 @@ const uint8_t ESC_COUNT = 8;
 const uint8_t ACTUATOR_COUNT = 8;
 const uint8_t escPins[ESC_COUNT] = {2, 3, 4, 5, 6, 7, 8, 9};
 const uint8_t actuatorPins[ACTUATOR_COUNT] = {10, 11, 12, 13, A0, A1, A2, A3};
-const int ESC_MIN_US = 1100;
+const int ESC_MIN_US = 1262;
 const int ESC_NEUTRAL_US = 1500;
-const int ESC_MAX_US = 1900;
+const int ESC_MAX_US = 1736;
 const unsigned long ESC_NEUTRAL_STARTUP_MS = 3000;
 const unsigned long HOST_TIMEOUT_MS = 500;
 const uint8_t WATCHDOG_TIMEOUT = WDTO_500MS;  // reboots the board if loop() hangs
+const unsigned long PRESSURE_PERIOD_MS = 100;
+const unsigned long PRESSURE_CONVERSION_MS = 20;
+const uint8_t PRESSURE_ZERO_SAMPLES = 20;
+const float FLUID_DENSITY_KG_M3 = 997.0f;
+const uint8_t PRESSURE_I2C_ADDRESS = 0x76;
+const uint8_t PRESSURE_RESET_COMMAND = 0x1E;
+const uint8_t PRESSURE_ADC_READ_COMMAND = 0x00;
+const uint8_t PRESSURE_PROM_READ_COMMAND = 0xA0;
+const uint8_t PRESSURE_CONVERT_D1_COMMAND = 0x4A;
+const uint8_t PRESSURE_CONVERT_D2_COMMAND = 0x5A;
 const uint8_t PACKET_LENGTH = 22;
 const uint8_t PACKET_SYNC_0 = 0xA5;
 const uint8_t PACKET_SYNC_1 = 0x5A;
@@ -32,8 +43,20 @@ bool actuatorState[ACTUATOR_COUNT];
 bool armed = false;
 bool needsDisarmFirst = true;   // after boot or any disarm, host must send a disarm before arming
 bool imuReady = false;
+bool pressureReady = false;
 bool calibrationMode = false;
 unsigned long lastHostCommand = 0;
+unsigned long lastPressureRead = 0;
+float depthOffset = 0.0f;
+float filteredDepth = 0.0f;
+uint16_t pressureProm[8] = {0};
+uint32_t pressureD1 = 0;
+uint32_t pressureD2 = 0;
+int32_t pressureTemperatureCentiC = 0;
+int32_t pressureRaw = 0;
+enum PressureState { PRESSURE_IDLE, PRESSURE_WAIT_D1, PRESSURE_WAIT_D2 };
+PressureState pressureState = PRESSURE_IDLE;
+unsigned long pressureConversionStarted = 0;
 char commandBuffer[80];
 uint8_t commandLength = 0;
 uint8_t packetBuffer[PACKET_LENGTH];
@@ -49,6 +72,12 @@ uint8_t calculateCrc8(const uint8_t *data, uint8_t length);
 void disarmAll(const char *reason);
 void printStatus();
 void readAndPrintImu();
+void initializePressureSensor();
+void servicePressureSensor();
+bool startPressureConversion(uint8_t command);
+bool readPressureAdc(uint32_t &value);
+uint8_t pressurePromCrc4(uint16_t *prom);
+void calculatePressure();
 int thrustToPulse(float thrust);
 
 void setup()
@@ -71,6 +100,7 @@ void setup()
   }
 
   SerialPort.begin(115200);
+  Wire.begin();
   SerialPort.println(F("BOOT,THRUSTER_IMU_CONTROLLER"));
   SerialPort.println(F("ESC_INIT,NEUTRAL,3000ms"));
   for (uint8_t i = 0; i < ESC_COUNT; ++i)
@@ -98,6 +128,8 @@ void setup()
     SerialPort.println(F("FAULT,IMU_NOT_RESPONDING,THRUSTERS_LOCKED"));
   }
 
+  initializePressureSensor();
+
   lastHostCommand = millis();
   SerialPort.println(F("STATE,DISARMED"));
   SerialPort.println(F("COMMANDS,ARM|DISARM|PING|STATUS|T channel -1..1|A channel 0|1|C|N"));
@@ -120,6 +152,180 @@ void loop()
     imu.update(UPDATE_ACCEL | UPDATE_GYRO | UPDATE_TEMP);
     readAndPrintImu();   // the 100 Hz sample rate already paces the output
   }
+
+  servicePressureSensor();
+}
+
+void initializePressureSensor()
+{
+  Wire.beginTransmission(PRESSURE_I2C_ADDRESS);
+  Wire.write(PRESSURE_RESET_COMMAND);
+  if (Wire.endTransmission() != 0)
+  {
+    SerialPort.println(F("SENSOR_FAULT,MS5837_NOT_FOUND,DEPTH_UNAVAILABLE"));
+    return;
+  }
+  delay(10);
+
+  for (uint8_t index = 0; index < 7; ++index)
+  {
+    Wire.beginTransmission(PRESSURE_I2C_ADDRESS);
+    Wire.write(PRESSURE_PROM_READ_COMMAND + index * 2);
+    if (Wire.endTransmission() != 0 || Wire.requestFrom(PRESSURE_I2C_ADDRESS, (uint8_t)2) != 2)
+    {
+      SerialPort.println(F("SENSOR_FAULT,MS5837_PROM_READ,DEPTH_UNAVAILABLE"));
+      return;
+    }
+    pressureProm[index] = ((uint16_t)Wire.read() << 8) | Wire.read();
+  }
+  pressureProm[7] = 0;
+  uint8_t storedCrc = pressureProm[0] >> 12;
+  if (pressurePromCrc4(pressureProm) != storedCrc)
+  {
+    SerialPort.println(F("SENSOR_FAULT,MS5837_PROM_CRC,DEPTH_UNAVAILABLE"));
+    return;
+  }
+
+  SerialPort.println(F("PRESSURE_ZERO,KEEP_SENSOR_AT_SURFACE"));
+  float depthSum = 0.0f;
+  for (uint8_t sample = 0; sample < PRESSURE_ZERO_SAMPLES; ++sample)
+  {
+    if (!startPressureConversion(PRESSURE_CONVERT_D1_COMMAND)) return;
+    delay(PRESSURE_CONVERSION_MS);
+    if (!readPressureAdc(pressureD1) || !startPressureConversion(PRESSURE_CONVERT_D2_COMMAND)) return;
+    delay(PRESSURE_CONVERSION_MS);
+    if (!readPressureAdc(pressureD2)) return;
+    calculatePressure();
+    depthSum += ((pressureRaw * 10.0f) - 101300.0f) /
+                (FLUID_DENSITY_KG_M3 * 9.80665f);
+  }
+  depthOffset = depthSum / PRESSURE_ZERO_SAMPLES;
+  filteredDepth = 0.0f;
+  pressureReady = true;
+  lastPressureRead = millis();
+  SerialPort.println(F("SENSOR,MS5837,READY"));
+}
+
+void servicePressureSensor()
+{
+  if (!pressureReady) return;
+  unsigned long now = millis();
+
+  if (pressureState == PRESSURE_IDLE)
+  {
+    if (now - lastPressureRead < PRESSURE_PERIOD_MS) return;
+    if (!startPressureConversion(PRESSURE_CONVERT_D1_COMMAND)) return;
+    pressureState = PRESSURE_WAIT_D1;
+    pressureConversionStarted = now;
+    return;
+  }
+
+  if (now - pressureConversionStarted < PRESSURE_CONVERSION_MS) return;
+
+  if (pressureState == PRESSURE_WAIT_D1)
+  {
+    if (!readPressureAdc(pressureD1) || !startPressureConversion(PRESSURE_CONVERT_D2_COMMAND))
+    {
+      pressureReady = false;
+      SerialPort.println(F("SENSOR_FAULT,MS5837_READ,DEPTH_UNAVAILABLE"));
+      return;
+    }
+    pressureState = PRESSURE_WAIT_D2;
+    pressureConversionStarted = now;
+    return;
+  }
+
+  if (!readPressureAdc(pressureD2))
+  {
+    pressureReady = false;
+    SerialPort.println(F("SENSOR_FAULT,MS5837_READ,DEPTH_UNAVAILABLE"));
+    return;
+  }
+
+  calculatePressure();
+  float depthMeters = ((pressureRaw * 10.0f) - 101300.0f) /
+                      (FLUID_DENSITY_KG_M3 * 9.80665f) - depthOffset;
+  filteredDepth = 0.7f * filteredDepth + 0.3f * depthMeters;
+  float temperatureC = pressureTemperatureCentiC / 100.0f;
+
+  SerialPort.print(F("P,"));
+  SerialPort.print(filteredDepth, 3);
+  SerialPort.print(',');
+  SerialPort.println(temperatureC, 1);
+  pressureState = PRESSURE_IDLE;
+  lastPressureRead = now;
+}
+
+bool startPressureConversion(uint8_t command)
+{
+  Wire.beginTransmission(PRESSURE_I2C_ADDRESS);
+  Wire.write(command);
+  return Wire.endTransmission() == 0;
+}
+
+bool readPressureAdc(uint32_t &value)
+{
+  Wire.beginTransmission(PRESSURE_I2C_ADDRESS);
+  Wire.write(PRESSURE_ADC_READ_COMMAND);
+  if (Wire.endTransmission() != 0 || Wire.requestFrom(PRESSURE_I2C_ADDRESS, (uint8_t)3) != 3)
+  {
+    return false;
+  }
+  value = ((uint32_t)Wire.read() << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
+  return true;
+}
+
+uint8_t pressurePromCrc4(uint16_t *prom)
+{
+  uint16_t remainder = 0;
+  prom[0] &= 0x0FFF;
+  prom[7] = 0;
+  for (uint8_t index = 0; index < 16; ++index)
+  {
+    remainder ^= (index & 1) ? (prom[index >> 1] & 0x00FF) : (prom[index >> 1] >> 8);
+    for (uint8_t bit = 0; bit < 8; ++bit)
+    {
+      remainder = (remainder & 0x8000) ? (remainder << 1) ^ 0x3000 : remainder << 1;
+    }
+  }
+  return (remainder >> 12) & 0x0F;
+}
+
+void calculatePressure()
+{
+  int32_t deltaTemperature = (int32_t)(pressureD2 - (uint32_t)pressureProm[5] * 256UL);
+  int64_t sensitivity = (int64_t)pressureProm[1] * 32768L +
+                        ((int64_t)pressureProm[3] * deltaTemperature) / 256L;
+  int64_t offset = (int64_t)pressureProm[2] * 65536L +
+                   ((int64_t)pressureProm[4] * deltaTemperature) / 128L;
+  int32_t temperature = 2000L +
+                        (int32_t)(((int64_t)deltaTemperature * pressureProm[6]) / 8388608LL);
+  int32_t temperatureCorrection = 0;
+  int64_t offsetCorrection = 0;
+  int64_t sensitivityCorrection = 0;
+
+  if (temperature < 2000)
+  {
+    temperatureCorrection = (int32_t)(((int64_t)3 * deltaTemperature * deltaTemperature) / 8589934592LL);
+    offsetCorrection = (int64_t)3 * (temperature - 2000L) * (temperature - 2000L) / 2;
+    sensitivityCorrection = (int64_t)5 * (temperature - 2000L) * (temperature - 2000L) / 8;
+    if (temperature < -1500)
+    {
+      offsetCorrection += (int64_t)7 * (temperature + 1500L) * (temperature + 1500L);
+      sensitivityCorrection += (int64_t)4 * (temperature + 1500L) * (temperature + 1500L);
+    }
+  }
+  else
+  {
+    temperatureCorrection = (int32_t)(((int64_t)2 * deltaTemperature * deltaTemperature) / 137438953472LL);
+    offsetCorrection = (int64_t)(temperature - 2000L) * (temperature - 2000L) / 16;
+  }
+
+  temperature -= temperatureCorrection;
+  pressureTemperatureCentiC = temperature;
+  sensitivity -= sensitivityCorrection;
+  offset -= offsetCorrection;
+  pressureRaw = (int32_t)((((int64_t)pressureD1 * sensitivity) / 2097152LL - offset) / 8192LL);
 }
 
 void processSerialCommands()
