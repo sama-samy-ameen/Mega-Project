@@ -13,9 +13,14 @@
 #endif
 
 const uint8_t ESC_COUNT = 8;
-const uint8_t ACTUATOR_COUNT = 8;
+const uint8_t ACTUATOR_COUNT = 6;
 const uint8_t escPins[ESC_COUNT] = {2, 3, 4, 5, 6, 7, 8, 9};
-const uint8_t actuatorPins[ACTUATOR_COUNT] = {10, 11, 12, 13, A0, A1, A2, A3};
+const uint8_t actuatorPins[ACTUATOR_COUNT] = {10, 12, 13, A0, A1, A2};
+const uint8_t CYTRON_PWM_PIN = 11;
+const uint8_t CYTRON_DIRECTION_PIN = A3;
+const uint8_t CYTRON_CW_DIRECTION = HIGH;
+const uint8_t CYTRON_SPEED_DUTY = 64;  // fixed 25% PWM duty
+const uint8_t CYTRON_ACTUATOR_FLAG = 6;  // seventh on/off signal in actuatorMask
 const int ESC_MIN_US = 1262;
 const int ESC_NEUTRAL_US = 1500;
 const int ESC_MAX_US = 1736;
@@ -40,6 +45,7 @@ MPU6500_DMP imu;
 Servo esc[ESC_COUNT];
 int escCommandUs[ESC_COUNT];
 bool actuatorState[ACTUATOR_COUNT];
+bool cytronEnabled = false;
 bool armed = false;
 bool needsDisarmFirst = true;   // after boot or any disarm, host must send a disarm before arming
 bool imuReady = false;
@@ -79,6 +85,7 @@ bool readPressureAdc(uint32_t &value);
 uint8_t pressurePromCrc4(uint16_t *prom);
 void calculatePressure();
 int thrustToPulse(float thrust);
+void setCytronMotor(bool enabled);
 
 void setup()
 {
@@ -91,6 +98,10 @@ void setup()
     digitalWrite(actuatorPins[i], LOW);
     actuatorState[i] = false;
   }
+  pinMode(CYTRON_PWM_PIN, OUTPUT);
+  pinMode(CYTRON_DIRECTION_PIN, OUTPUT);
+  digitalWrite(CYTRON_DIRECTION_PIN, CYTRON_CW_DIRECTION);
+  analogWrite(CYTRON_PWM_PIN, 0);
 
   for (uint8_t i = 0; i < ESC_COUNT; ++i)
   {
@@ -451,6 +462,7 @@ void processBinaryPacket(const uint8_t *packet)
     actuatorState[i] = armed && ((actuatorMask & (1U << i)) != 0);
     digitalWrite(actuatorPins[i], actuatorState[i] ? HIGH : LOW);
   }
+  setCytronMotor(armed && ((actuatorMask & (1U << CYTRON_ACTUATOR_FLAG)) != 0));
 
   // ACK,<sequence>,<armed> so the host can see the real armed state.
   SerialPort.print(F("ACK,"));
@@ -566,9 +578,9 @@ void processCommand(char *line)
     }
     int channel = atoi(channelText);
     int state = atoi(stateText);
-    if (channel < 1 || channel > ACTUATOR_COUNT || (state != 0 && state != 1))
+    if (channel < 1 || channel > ACTUATOR_COUNT + 1 || (state != 0 && state != 1))
     {
-      SerialPort.println(F("ERROR,ACTUATOR_RANGE_CHANNEL_1_TO_8_STATE_0_OR_1"));
+      SerialPort.println(F("ERROR,ACTUATOR_RANGE_CHANNEL_1_TO_7_STATE_0_OR_1"));
       return;
     }
     if (!armed && state == 1)
@@ -576,6 +588,15 @@ void processCommand(char *line)
       SerialPort.println(F("ERROR,DISARMED"));
       return;
     }
+    if (channel == ACTUATOR_COUNT + 1)
+    {
+      setCytronMotor(armed && state == 1);
+      lastHostCommand = millis();
+      SerialPort.print(F("CYTRON_CLOCKWISE,"));
+      SerialPort.println(cytronEnabled ? F("ON") : F("OFF"));
+      return;
+    }
+
     uint8_t index = (uint8_t)(channel - 1);
     actuatorState[index] = state == 1;
     digitalWrite(actuatorPins[index], actuatorState[index] ? HIGH : LOW);
@@ -605,6 +626,7 @@ void disarmAll(const char *reason)
     actuatorState[i] = false;
     digitalWrite(actuatorPins[i], LOW);
   }
+  setCytronMotor(false);
   if (wasArmed || strcmp(reason, "COMMAND") == 0)
   {
     SerialPort.print(F("STATE,DISARMED,"));
@@ -635,7 +657,18 @@ void printStatus()
     SerialPort.print(',');
     SerialPort.println(actuatorState[i] ? F("ON") : F("OFF"));
   }
+  SerialPort.print(F("CYTRON_CLOCKWISE,"));
+  SerialPort.print(cytronEnabled ? F("ON") : F("OFF"));
+  SerialPort.print(F(",DUTY,"));
+  SerialPort.println(CYTRON_SPEED_DUTY);
   SerialPort.println(F("NOTE,ESC_SIGNAL_IS_NOT_MOTOR_FEEDBACK"));
+}
+
+void setCytronMotor(bool enabled)
+{
+  cytronEnabled = enabled;
+  digitalWrite(CYTRON_DIRECTION_PIN, CYTRON_CW_DIRECTION);
+  analogWrite(CYTRON_PWM_PIN, enabled ? CYTRON_SPEED_DUTY : 0);
 }
 
 int thrustToPulse(float thrust)
