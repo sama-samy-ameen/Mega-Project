@@ -101,13 +101,14 @@ class joystick(Node):
             elif code == e.ABS_HAT0X:
                 self.keys[2] = int(value == 1)             # D-pad right
                 self.keys[3] = int(value == -1)            # D-pad left
-            elif code == e.ABS_HAT0Y:                      # D-pad up/down are one-shot
-                if value == -1:
-                    with lock:
-                        self.pending.add(12)               # D-pad up
-                elif value == 1:
-                    with lock:
-                        self.pending.add(13)               # D-pad down
+                            
+            elif code == e.ABS_HAT0Y:
+                if value == -1 and not self.dpad_up_pressed:
+                    self.p5_state = not self.p5_state
+                if value == 1 and not self.dpad_down_pressed:
+                    self.p6_state = not self.p6_state
+                self.dpad_up_pressed = (value == -1)   
+                self.dpad_down_pressed = (value == 1)            
             elif code == e.ABS_Y:
                 self.keys[4] = push(value, -1)             # Left stick up
                 self.keys[5] = push(value, 1)              # Left stick down
@@ -160,7 +161,7 @@ class joystick(Node):
             while True:
                 # one-shot buttons: 1 for this refresh only, then back to 0
                 with lock:
-                    for i in [12, 13] + list(ONE_SHOT.values()):
+                    for i in ONE_SHOT.values():
                         self.keys[i] = 1 if i in self.pending else 0
                     self.pending.clear()
 
