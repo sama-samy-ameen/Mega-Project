@@ -58,18 +58,23 @@ class Actuators(Node):
             self.command |=(1<<5)
         else:
             self.command &= ~(1<<5)
-            
 
         msg.command =self.command
         self.publisher.publish(msg)
 
          
     
+    
+    def commands(self):
+        #publishes the final command  to  serial       
+            finalCommand=ActuatorsCommands()
+            finalCommand.command = self.command
+            self.publisher.publish(finalCommand)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node=ActuatorsCommands()
+    node=Actuators()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

@@ -39,11 +39,6 @@ class joystick(Node):
         self.joystick_publisher=self.create_publisher(ActuatorsCommands,"/joystick_actuators",10)
         self.create_timer(0.1,self.read_joystick)
 
-        #for toggle
-        self.p1_state = False
-        self.p2_state = False
-        self.p3_state = False
-        self.p4_state = False
 
 
 
@@ -135,29 +130,6 @@ class joystick(Node):
             return
 
         threading.Thread(target=read_gamepad, args=(pad,), daemon=True).start()
-                with self.lock:
-            # Toggle piston state once per press.
-            if 15 in self.pending:       # Circle -> p1
-                self.p1_state = not self.p1_state
-            if 16 in self.pending:       # Triangle -> p2
-                self.p2_state = not self.p2_state
-            if 17 in self.pending:       # Square -> p3
-                self.p3_state = not self.p3_state
-            if 14 in self.pending:       # Cross -> p4
-                self.p4_state = not self.p4_state
-
-            # One-refresh commands, including D-pad Up/Down.
-            for i in [12, 13] + list(self.one_shot.values()):
-                self.keys[i] = 1 if i in self.pending else 0
-
-            self.pending.clear()
-
-            # Copy shared values while holding the lock.
-            keys = self.keys.copy()
-            p1 = self.p1_state
-            p2 = self.p2_state
-            p3 = self.p3_state
-            p4 = self.p4_state
 
         try:
             while True:
@@ -217,6 +189,10 @@ class joystick(Node):
 
                 self.joystick_publisher.publish(actuators_msg)
 
+
+
+
+                
 
 
                 time.sleep(0.1)   # 100 ms

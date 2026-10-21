@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'actuators=rov_actuators.actuators:main'
         ],
     },
 )
