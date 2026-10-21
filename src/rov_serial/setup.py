@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'numpy', 'ahrs>=0.4.0'],
     zip_safe=True,
     maintainer='aliaa',
     maintainer_email='aliaaslsayed745@gmail.com',
@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'rov_serial_bridge = rov_serial.rov_serial_bridge:main',
+            'rov_attitude_ekf = rov_serial.attitude_ekf:main',
         ],
     },
 )

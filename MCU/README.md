@@ -68,3 +68,20 @@ Topics:
 - `/rov/imu`: `Float32MultiArray` ordered as accel X/Y/Z (g), gyro X/Y/Z (dps), temperature (C).
 
 The current firmware has no pressure sensor, so it does not publish depth. The serial bridge uses `/dev/ttyACM0` by default; pass the actual device path as `serial_port` on the target computer.
+
+## ROS 2 Attitude EKF
+
+The `rov_attitude_ekf` node subscribes to `/rov/imu`, fuses calibrated accelerometer and gyroscope data with the AHRS EKF, and publishes `[pitch, roll, yaw]` in degrees on `/rov/attitude`. Its `yaw_enabled` parameter defaults to `false`, which publishes yaw as exactly `0.0`. Yaw has no absolute reference without a magnetometer and will drift when enabled.
+
+Run the node after building and sourcing the ROS workspace:
+
+```bash
+ros2 run rov_serial rov_attitude_ekf
+```
+
+Toggle yaw at runtime:
+
+```bash
+ros2 param set /rov_attitude_ekf yaw_enabled true
+ros2 param set /rov_attitude_ekf yaw_enabled false
+```
