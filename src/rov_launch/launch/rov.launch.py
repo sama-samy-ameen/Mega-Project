@@ -18,7 +18,7 @@ def generate_launch_description():
             ),
 
         Node(
-            package='rov_gui',
+            package='RovGui',
             executable='rovgui',
             name='rov_dashboard',
             output='screen',

@@ -8,15 +8,14 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(std_msgs REQUIRED)  # <-- أضيفي هذا السطر هنا
+find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotionCommands.msg"
   "msg/ThrustersSpeeds.msg"
   "msg/ActuatorsCommands.msg"
-  "msg/RovCommand.msg"
   "msg/Guireader.msg"
-  DEPENDENCIES std_msgs  # <-- وأضيفي هذا السطر هنا لربط الرسائل بـ std_msgs
+  DEPENDENCIES std_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
