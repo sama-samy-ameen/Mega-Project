@@ -28,7 +28,7 @@ from evdev import InputDevice, list_devices, ecodes as e
 
 import rclpy
 from rclpy.node import Node
-from rov_interfaces.msg import MotionCommands , ActuatorsCommands
+from rov_interfaces.msg import MotionCommands , ActuatorsCommands , AutonomousCommand
 
 
 class joystick(Node):
@@ -38,6 +38,9 @@ class joystick(Node):
         self.create_timer(0.1, self.read_joystick)
 
         self.joystick_publisher=self.create_publisher(ActuatorsCommands,"/joystick_actuators",10)
+        self.create_timer(0.1,self.read_joystick)
+
+        self.autonomous_publisher=self.create_publisher(AutonomousCommand,"/autonomous_joystick",10)
         self.create_timer(0.1,self.read_joystick)
 
         #for toggle buttons:
@@ -50,6 +53,8 @@ class joystick(Node):
         self.motor_state=False
         self.dpad_up_pressed = False
         self.dpad_down_pressed = False
+        self.auto=False
+        # e.BTN_START: 21,   # Options
 
 
 
@@ -64,7 +69,6 @@ class joystick(Node):
             e.BTN_TL: 18,      # L1
             e.BTN_TR: 19,      # R1
             e.BTN_SELECT: 20,  # Share
-            e.BTN_START: 21,   # Options
             e.BTN_THUMBL: 23,  # L3
             e.BTN_THUMBR: 24,  # R3
         }
@@ -143,6 +147,9 @@ class joystick(Node):
                     
                     elif ev.code == e.BTN_MODE:
                         self.motor_state = not self.motor_state
+
+                    elif ev.code == e.BTN_START: 
+                        self.auto = not self.auto
                     
                     elif ev.code in ONE_SHOT:
                         with lock:
@@ -208,9 +215,15 @@ class joystick(Node):
                 actuators.p4 = self.p4_state
                 actuators.p5 = self.p5_state
                 actuators.p6 = self.p6_state
+                
                 actuators.motor = self.motor_state
 
                 self.joystick_publisher.publish(actuators)
+
+                automation = AutonomousCommand()
+                automation.autonomous_mode = self.auto
+                self.autonomous_publisher.publish(automation)
+
 
 
 
