@@ -496,7 +496,7 @@ Build it in small pieces, running after each one:
 STEP 1  See what the gamepad sends.
         Write only the imports, find the device, and print raw events:
 
-            from evdev import InputDevice, list_devices
+            from evdev import InputDevice, list_joystick_actuatorsdevices
             for path in list_devices():
                 dev = InputDevice(path)
                 if dev.name == "Wireless Controller":
