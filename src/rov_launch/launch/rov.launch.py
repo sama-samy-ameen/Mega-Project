@@ -4,15 +4,30 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         Node(
+            package='rov_serial',
+            executable='rov_serial_bridge',
+            name='rov_serial_bridge',
+            output='screen',
+            ),
+
+         Node(
+            package='rov_serial',
+            executable='rov_attitude_ekf',
+            name='rov_attitude_ekf',
+            output='screen',
+            ),
+
+        Node(
+            package='rov_gui',
+            executable='rovgui',
+            name='rov_dashboard',
+            output='screen',
+            ),
+                
+        Node(
             package='controller',
             executable='joystick',
             name='joystick',
-            output='screen',
-        ),
-        Node(
-            package='rov_actuators',
-            executable='actuators',
-            name='actutators',
             output='screen',
         ),
         Node(
@@ -20,13 +35,28 @@ def generate_launch_description():
             executable='motion',
             name='motion_node',
             output='screen',
-        ),
+            ),
+
         Node(
-            package='autonomous_control',
-            executable='autonomous_control',
-            name='autonomous_control_node',
+            package='rov_actuators',
+            executable='actuators',
+            name='actuators',
             output='screen',
         ),
         
+        Node(
+            package='crab_detection',
+            executable='crab_detection_node',
+            name='crab_detection_node',
+            output='screen',
+        ),
+
+        Node(
+            package='rov_vision',
+            executable='red_square_node',
+            name='red_square_node',
+            output='screen',
+            ),
+
         
     ])

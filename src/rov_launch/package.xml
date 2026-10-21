@@ -20,7 +20,11 @@
   <exec_depend>controller</exec_depend>
   <exec_depend>rov_actuators</exec_depend>
   <exec_depend>rov_motion</exec_depend>
+  <exec_depend>autonomous_control</exec_depend>
+  <exec_depend>rov_serial</exec_depend>
+  <exec_depend>rov_gui</exec_depend>
   
+
 
   <export>
     <build_type>ament_python</build_type>
