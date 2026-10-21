@@ -67,9 +67,8 @@ Topics:
 - `/rov/armed`: `Bool` reporting the armed state acknowledged by the Nano.
 - `/rov/imu`: `Float32MultiArray` ordered as accel X/Y/Z (g), gyro X/Y/Z (dps), temperature (C).
 - `/rov/depth`: `Float32` depth in meters, surface-zeroed at boot.
-- `/rov/pressure_temperature`: `Float32` MS5837 temperature in degrees Celsius.
 
-The combined thruster firmware uses non-blocking MS5837 I2C conversions so pressure sampling does not pause 100 Hz IMU processing. It averages 20 surface readings at startup to establish zero depth and emits a filtered `P,depth_m,temp_c` record at 10 Hz. Keep the sensor at the water surface during startup zeroing. If the sensor is not detected, the bridge continues without depth updates and the Nano reports a sensor fault. No external MS5837 Arduino library is required.
+The combined thruster firmware uses non-blocking MS5837 I2C conversions so pressure sampling does not pause 100 Hz IMU processing. It averages 20 surface readings at startup to establish zero depth and emits a filtered `P,depth_m` record at 10 Hz. Keep the sensor at the water surface during startup zeroing. MS5837 temperature is used internally for pressure compensation but is not transmitted or published. If the sensor is not detected, the bridge continues without depth updates and the Nano reports a sensor fault. No external MS5837 Arduino library is required.
 
 ## ROS 2 Attitude EKF
 

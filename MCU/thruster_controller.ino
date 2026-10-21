@@ -246,12 +246,9 @@ void servicePressureSensor()
   float depthMeters = ((pressureRaw * 10.0f) - 101300.0f) /
                       (FLUID_DENSITY_KG_M3 * 9.80665f) - depthOffset;
   filteredDepth = 0.7f * filteredDepth + 0.3f * depthMeters;
-  float temperatureC = pressureTemperatureCentiC / 100.0f;
 
   SerialPort.print(F("P,"));
-  SerialPort.print(filteredDepth, 3);
-  SerialPort.print(',');
-  SerialPort.println(temperatureC, 1);
+  SerialPort.println(filteredDepth, 3);
   pressureState = PRESSURE_IDLE;
   lastPressureRead = now;
 }
