@@ -25,7 +25,7 @@ class Actuators(Node):
     
     def actions(self,msg:ActuatorsCommands):
         #from the joystick and accordingly controlling pistons and motors
-        '''0b00000000:    0,1,2: pistons on 1 gribber    3 :piston for gribber2   4 :motor  , with const values '''
+        '''0b00000000:    0,1,2: pistons on 1 gribber    3 :piston for gribber2  4,5: for pistons 6 :motor  , with const values '''
         #p1
         if msg.p1 == True :
            self.command |= (1<<0)
@@ -50,11 +50,24 @@ class Actuators(Node):
         else:
             self.command &= ~(1<<3) 
 
+         #p5
+            if msg.p5:
+                self.command |=(1<<4)
+            else:
+                self.command &= ~(1<<4) 
+
+         #p6
+            if msg.p6:
+                self.command |=(1<<5)
+            else:
+                self.command &= ~(1<<5) 
+
+        
         #motor
         if msg.motor:
-           self.command |=(1<<4)
+           self.command |=(1<<6)
         else:
-            self.command &= ~(1<<4)
+            self.command &= ~(1<<6)
 
         
         msg.command =self.command

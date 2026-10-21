@@ -24,6 +24,7 @@ import time
 import numpy
 
 from evdev import InputDevice, list_devices, ecodes as e
+from typeguard import value
 
 import rclpy
 from rclpy.node import Node
@@ -44,7 +45,11 @@ class joystick(Node):
         self.p2_state=False
         self.p3_state=False
         self.p4_state=False
+        self.p5_state=False
+        self.p6_state=False
         self.motor_state=False
+        self.dpad_up_pressed = False
+        self.dpad_down_pressed = False
 
 
 
@@ -96,13 +101,19 @@ class joystick(Node):
             elif code == e.ABS_HAT0X:
                 self.keys[2] = int(value == 1)             # D-pad right
                 self.keys[3] = int(value == -1)            # D-pad left
-            elif code == e.ABS_HAT0Y:                      # D-pad up/down are one-shot
-                if value == -1:
-                    with lock:
-                        self.pending.add(12)               # D-pad up
-                elif value == 1:
-                    with lock:
-                        self.pending.add(13)               # D-pad down
+            elif code == e.ABS_HAT0Y:
+                if value == -1 and not self.dpad_up_pressed:
+                    self.p5_state = not self.p5_state
+                    self.dpad_up_pressed = True
+
+            elif value == 1 and not self.dpad_down_pressed:
+                    self.p6_state = not self.p6_state
+                    self.dpad_down_pressed = True
+
+            elif value == 0:
+                self.dpad_up_pressed = False
+                self.dpad_down_pressed = False
+
             elif code == e.ABS_Y:
                 self.keys[4] = push(value, -1)             # Left stick up
                 self.keys[5] = push(value, 1)              # Left stick down
@@ -134,6 +145,7 @@ class joystick(Node):
                     elif ev.code == e.BTN_SOUTH:
                         self.p4_state = not self.p4_state
 
+                    
                     elif ev.code == e.BTN_MODE:
                         self.motor_state = not self.motor_state
                     
@@ -198,6 +210,8 @@ class joystick(Node):
                 actuators.p2 = self.p2_state
                 actuators.p3 = self.p3_state
                 actuators.p4 = self.p4_state
+                actuators.p5 = self.p5_state
+                actuators.p6 = self.p6_state
                 actuators.motor = self.motor_state
 
                 self.joystick_publisher.publish(actuators)
