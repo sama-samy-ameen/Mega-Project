@@ -19,6 +19,7 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray, Int32MultiArray
 SYNC = b"\xA5\x5A"
 HEARTBEAT_PERIOD_SECONDS = 0.05
 NEUTRAL_PWM = 1500
+MOTION_OFFSET_LIMIT = 200
 
 # Firmware lines that mean "I refused to arm" or "something is wrong".
 REFUSAL_LINES = (
@@ -207,12 +208,12 @@ class ROVSerialBridge(Node):
 
     def motion_callback(self, message: Int32MultiArray) -> None:
         if len(message.data) != 8:
-            self.get_logger().warning("/rov/motion must contain exactly 8 PWM values")
+            self.get_logger().warning("/rov/motion must contain exactly 8 signed motor values")
             return
-        if any(value < 1100 or value > 1900 for value in message.data):
-            self.get_logger().warning("Rejected thruster PWM outside 1100-1900 us")
+        if any(value < -MOTION_OFFSET_LIMIT or value > MOTION_OFFSET_LIMIT for value in message.data):
+            self.get_logger().warning("Rejected /rov/motion value outside -200..200")
             return
-        self.latest_pwms = [int(value) for value in message.data]
+        self.latest_pwms = [NEUTRAL_PWM + int(value) for value in message.data]
         self.last_motion_time = time.monotonic()
 
     def states_callback(self, message: Int32MultiArray) -> None:
