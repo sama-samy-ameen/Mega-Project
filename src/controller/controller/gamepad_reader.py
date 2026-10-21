@@ -24,10 +24,11 @@ import time
 import numpy
 
 from evdev import InputDevice, list_devices, ecodes as e
+#from typeguard import value
 
 import rclpy
 from rclpy.node import Node
-from rov_interfaces.msg import MotionCommands
+from rov_interfaces.msg import MotionCommands , ActuatorsCommands
 
 
 class joystick(Node):
@@ -36,21 +37,34 @@ class joystick(Node):
         self.pub = self.create_publisher(MotionCommands, "/joystick_motion", 10)
         self.create_timer(0.1, self.read_joystick)
 
+        self.joystick_publisher=self.create_publisher(ActuatorsCommands,"/joystick_actuators",10)
+        self.create_timer(0.1,self.read_joystick)
+
+        #for toggle buttons:
+        self.p1_state=False
+        self.p2_state=False
+        self.p3_state=False
+        self.p4_state=False
+        self.p5_state=False
+        self.p6_state=False
+        self.motor_state=False
+        self.dpad_up_pressed = False
+        self.dpad_down_pressed = False
+
+
+
+
     def read_joystick(self):
 
         self.keys = [0] * 25
 
         # one-shot buttons: gamepad button -> index in the array
         ONE_SHOT = {
-            e.BTN_SOUTH: 14,   # Cross
-            e.BTN_EAST: 15,    # Circle
-            e.BTN_NORTH: 16,   # Triangle
-            e.BTN_WEST: 17,    # Square
+          
             e.BTN_TL: 18,      # L1
             e.BTN_TR: 19,      # R1
             e.BTN_SELECT: 20,  # Share
             e.BTN_START: 21,   # Options
-            e.BTN_MODE: 22,    # PS
             e.BTN_THUMBL: 23,  # L3
             e.BTN_THUMBR: 24,  # R3
         }
@@ -111,10 +125,27 @@ class joystick(Node):
             for ev in pad.read_loop():
                 if ev.type == e.EV_ABS:
                     update(ev.code, ev.value)
-                elif ev.type == e.EV_KEY and ev.value == 1 and ev.code in ONE_SHOT:
-                    with lock:
-                        self.pending.add(ONE_SHOT[ev.code])   # remember the press
+                elif ev.type == e.EV_KEY and ev.value == 1:
+                    #for toggling certain buttons
+                    if ev.code == e.BTN_EAST:
+                        self.p1_state = not self.p1_state
 
+                    elif ev.code == e.BTN_NORTH:
+                        self.p2_state = not self.p2_state
+
+                    elif ev.code == e.BTN_WEST:
+                        self.p3_state = not self.p3_state
+
+                    elif ev.code == e.BTN_SOUTH:
+                        self.p4_state = not self.p4_state
+
+                    
+                    elif ev.code == e.BTN_MODE:
+                        self.motor_state = not self.motor_state
+                    
+                    elif ev.code in ONE_SHOT:
+                        with lock:
+                            self.pending.add(ONE_SHOT[ev.code])
 
     
         pad = find_gamepad(self)
@@ -163,8 +194,28 @@ class joystick(Node):
                 motion_msg.sway = self.keys[10] - self.keys[11]
                 motion_msg.depth_hold=bool(self.keys[24])
 
-                self.get_logger().info(f"{motion_msg}")
+                
                 self.pub.publish(motion_msg)
+
+
+
+                actuators = ActuatorsCommands()
+
+                actuators.p1 = self.p1_state
+                actuators.p2 = self.p2_state
+                actuators.p3 = self.p3_state
+                actuators.p4 = self.p4_state
+                actuators.p5 = self.p5_state
+                actuators.p6 = self.p6_state
+                actuators.motor = self.motor_state
+
+                self.joystick_publisher.publish(actuators)
+
+
+
+
+                
+
 
                 time.sleep(0.1)   # 100 ms
         except KeyboardInterrupt:
