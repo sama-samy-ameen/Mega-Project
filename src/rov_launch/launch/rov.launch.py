@@ -21,5 +21,12 @@ def generate_launch_description():
             name='motion_node',
             output='screen',
         ),
+        Node(
+            package='autonomous_control',
+            executable='autonomous_control',
+            name='autonomous_control_node',
+            output='screen',
+        ),
+        
         
     ])
