@@ -48,3 +48,23 @@ Compile and upload the combined IMU/thruster controller:
 Close Serial Monitor before upload. The controller starts disarmed, requires explicit arming, and returns ESC signals to neutral on host timeout. Test with thrusters safely secured and props clear. The Nano output pins are logic/signal outputs; external power drivers must supply actuator and thruster current.
 
 Use `-CompileOnly` to validate either sketch without uploading. Use `-Processor atmega328old` if the Nano uses the old bootloader.
+
+## ROS 2 Serial Bridge
+
+The matching ROS 2 node is in `src/rov_serial/rov_serial/rov_serial_bridge.py` and is also copied here as `rov_serial_bridge.py`. It sends a 22-byte sync/sequence/arm/PWM/actuator/CRC packet every 50 ms and disarms if `/rov/motion` becomes stale. The Nano also has a 500 ms serial packet watchdog.
+
+Install ROS package dependencies with `rosdep`, build the workspace, then run:
+
+```bash
+ros2 run rov_serial rov_serial_bridge --ros-args -p serial_port:=/dev/ttyACM0 -p baud_rate:=115200
+```
+
+Topics:
+
+- `/rov/motion`: `Int32MultiArray` with eight ESC pulse widths in microseconds, each 1100-1900.
+- `/rov/actuators`: `Int32MultiArray` with up to eight nonzero/on or zero/off states.
+- `/rov/arm`: `Bool`; publish false to establish disarmed state, then true to arm after fresh motion commands are arriving.
+- `/rov/armed`: `Bool` reporting the armed state acknowledged by the Nano.
+- `/rov/imu`: `Float32MultiArray` ordered as accel X/Y/Z (g), gyro X/Y/Z (dps), temperature (C).
+
+The current firmware has no pressure sensor, so it does not publish depth. The serial bridge uses `/dev/ttyACM0` by default; pass the actual device path as `serial_port` on the target computer.
