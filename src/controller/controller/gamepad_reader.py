@@ -161,6 +161,7 @@ class joystick(Node):
                 # motion_msg.swayright = self.keys[10]
                 # motion_msg.swayleft = self.keys[11]
                 motion_msg.sway = self.keys[10] - self.keys[11]
+                
                 motion_msg.depth_hold=bool(self.keys[24])
 
                 self.get_logger().info(f"{motion_msg}")
