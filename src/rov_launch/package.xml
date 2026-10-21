@@ -23,7 +23,9 @@
   <exec_depend>autonomous_control</exec_depend>
   <exec_depend>rov_serial</exec_depend>
   <exec_depend>rov_gui</exec_depend>
-  
+  <exec_depend>rov_vision</exec_depend>
+  <exec_depend>crab_detection</exec_depend>
+
 
 
   <export>
