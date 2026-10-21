@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rov_interfaces.msg import ActuatorsCommands 
+from rov_interfaces.msg import ActuatorsCommands , AutonomousCommand
 
 class Actuators(Node):
     def __init__(self):
@@ -14,6 +14,9 @@ class Actuators(Node):
 
         #subscriber taking data from serial node
         self.serial_subscriber=self.create_subscription(ActuatorsCommands,'/joystick_actuators',self.actions,10)
+
+        #subscriber for autonomous mode
+        #self.auto_subscriber=self.create_subscription(ActuatorsCommands,'/autonomous',self.actions,10)
         
         self.command=0
         self.speed=0
@@ -22,7 +25,7 @@ class Actuators(Node):
     
     def actions(self,msg:ActuatorsCommands):
         #from the joystick and accordingly controlling pistons and motors
-        '''0b00000000:    0,1,2: pistons on 1 gribber of tasks 3 and 4    3 piston for another gribber 4,5: dir1 and dir2 , with const values '''
+        '''0b00000000:    0,1,2: pistons on 1 gribber    3 :piston for gribber2   4 :motor  , with const values '''
         #p1
         if msg.p1 == True :
            self.command |= (1<<0)
@@ -47,18 +50,13 @@ class Actuators(Node):
         else:
             self.command &= ~(1<<3) 
 
-        #dir1 'rotate in dir1'
-        if msg.dir1:
+        #motor
+        if msg.motor:
            self.command |=(1<<4)
         else:
             self.command &= ~(1<<4)
 
-        #dir2 'rotate in dir2'
-        if msg.dir2:
-            self.command |=(1<<5)
-        else:
-            self.command &= ~(1<<5)
-
+        
         msg.command =self.command
         self.publisher.publish(msg)
 
