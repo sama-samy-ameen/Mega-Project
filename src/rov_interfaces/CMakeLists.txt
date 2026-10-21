@@ -12,6 +12,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotionCommands.msg"
   "msg/ThrustersSpeeds.msg"
+  "msg/ActuatorsCommands.msg"
 )
 ament_export_dependencies(rosidl_default_runtime)
 

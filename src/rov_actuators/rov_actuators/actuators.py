@@ -1,91 +1,80 @@
 import rclpy
 from rclpy.node import Node
-from rov_interfaces.msg import ActuatorsCommands , AutonomousCommand
+from rov_interfaces.msg import ActuatorsCommands
+
 
 class Actuators(Node):
     def __init__(self):
         super().__init__('actuators')
 
-        #publish actuators commands
-        self.publisher=self.create_publisher(ActuatorsCommands,'/actuators',10)
+        # Publish actuators commands
+        self.publisher = self.create_publisher(ActuatorsCommands, '/actuators', 10)
 
-        #data publish rate 
-        self.timer=self.create_timer(0.1,self.commands)
+        # Data publish rate (10 Hz)
+        self.timer = self.create_timer(0.1, self.commands)
 
-        #subscriber taking data from serial node
-        self.serial_subscriber=self.create_subscription(ActuatorsCommands,'/joystick_actuators',self.actions,10)
+        # Subscriber taking data from joystick node
+        self.serial_subscriber = self.create_subscription(
+            ActuatorsCommands,
+            '/joystick_actuators',
+            self.actions,
+            10
+        )
 
-        #subscriber for autonomous mode
-        #self.auto_subscriber=self.create_subscription(ActuatorsCommands,'/autonomous',self.actions,10)
-        
-        self.command=0
-        self.speed=0
+        self.command = 0
+        self.latest_msg = ActuatorsCommands()
 
-
-    
-    def actions(self,msg:ActuatorsCommands):
-        #from the joystick and accordingly controlling pistons and motors
-        '''0b00000000:    0,1,2: pistons on 1 gribber    3 :piston for gribber2  4,5: for pistons 6 :motor  , with const values '''
-        #p1
-        if msg.p1 == True :
-           self.command |= (1<<0)
+    def actions(self, msg: ActuatorsCommands):
+        # 0,1,2: pistons on gripper 1 | 3: piston on gripper 2 | 4,5: pistons | 6: motor
+        if msg.p1:
+            self.command |= (1 << 0)
         else:
-            self.command &= ~(1<<0)
+            self.command &= ~(1 << 0)
 
-        #p2    
         if msg.p2:
-            self.command |= (1<<1)
+            self.command |= (1 << 1)
         else:
             self.command &= ~(1 << 1)
 
-        #p3
-        if msg.p3: 
-           self.command |= (1<<2)
-        else :
-            self.command &= ~(1<<2)
+        if msg.p3:
+            self.command |= (1 << 2)
+        else:
+            self.command &= ~(1 << 2)
 
-        #p4
         if msg.p4:
-            self.command |=(1<<3)
+            self.command |= (1 << 3)
         else:
-            self.command &= ~(1<<3) 
+            self.command &= ~(1 << 3)
 
-         #p5
-            if msg.p5:
-                self.command |=(1<<4)
-            else:
-                self.command &= ~(1<<4) 
+        # Fixed indentation (previously nested inside p4's else block)
+        if msg.p5:
+            self.command |= (1 << 4)
+        else:
+            self.command &= ~(1 << 4)
 
-         #p6
-            if msg.p6:
-                self.command |=(1<<5)
-            else:
-                self.command &= ~(1<<5) 
+        if msg.p6:
+            self.command |= (1 << 5)
+        else:
+            self.command &= ~(1 << 5)
 
-        
-        #motor
         if msg.motor:
-           self.command |=(1<<6)
+            self.command |= (1 << 6)
         else:
-            self.command &= ~(1<<6)
+            self.command &= ~(1 << 6)
 
-        
-        msg.command =self.command
-        self.publisher.publish(msg)
+        # Store updated message for the timer to publish cleanly
+        msg.command = self.command
+        self.latest_msg = msg
 
-         
-    
-    
     def commands(self):
-        #publishes the final command  to  serial       
-            finalCommand=ActuatorsCommands()
-            finalCommand.command = self.command
-            self.publisher.publish(finalCommand)
+        # Publishes the full state (both booleans and bitmask command) at 10 Hz
+        self.latest_msg.command = self.command
+        self.publisher.publish(self.latest_msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node=Actuators()
+    node = Actuators()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
