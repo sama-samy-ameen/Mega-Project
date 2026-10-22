@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'RovGui'
+package_name = 'rov_gui'
 
 setup(
     name=package_name,
@@ -10,10 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-
-        # إضافة ملف الواجهة للـ installation
-        ('share/' + package_name + '/RovGui',
-            ['RovGui/rov.ui']),
+        ('share/' + package_name, ['rov_gui/rov.ui']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,7 +25,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rovgui = RovGui.rovgui:main',
+            'rovgui = rov_gui.rovgui:main',
         ],
     },
 )

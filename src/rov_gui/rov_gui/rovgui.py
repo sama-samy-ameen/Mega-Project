@@ -8,10 +8,12 @@ RosWorker - spins the node in its own QThread.
 Dashboard - the window: one set_* method per feature.
 """
 import sys
+import os
 
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
+from ament_index_python.packages import get_package_share_directory
 from PyQt5 import uic
 from PyQt5.QtCore import QObject, QThread, QTimer, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QImage, QPixmap
@@ -19,7 +21,7 @@ from PyQt5.QtWidgets import QApplication, QListWidgetItem, QMainWindow, QSizePol
 
 from sensor_msgs.msg import Image                       # camera placeholder
 from std_msgs.msg import Float32, Float32MultiArray     # IMU / depth / PID placeholders
-from rov_msgs.msg import ActuatorsCommands, AutonomousCommand, ThrustersSpeeds   # <-- your package name
+from rov_interfaces.msg import ActuatorsCommands, AutonomousCommand, ThrustersSpeeds
 
 PWM_REST = 1500      # T200: 1200..1800 us, 1500 = stopped
 PWM_SPAN = 300       # +-300 us = 100 %
@@ -71,7 +73,7 @@ class RosGUI(Node, QObject):
 
     def autonomous_callback(self, m):
         self.mode_changed.emit(m.autonomous_mode)
-        self.state_changed.emit(m.state)                                      # the other fields are ignored
+        self.state_changed.emit("AUTONOMOUS MODE" if m.autonomous_mode else "MANUAL MODE")
 
     def camera_callback(self, index, msg):
         # TODO placeholder: reads a sensor_msgs/Image (rgb8). Change it for your camera message.
@@ -103,7 +105,8 @@ class Dashboard(QMainWindow):
 
     def __init__(self, node):
         super().__init__()
-        uic.loadUi("rov_gui.ui", self)
+        ui_path = os.path.join(get_package_share_directory("rov_gui"), "rov.ui")
+        uic.loadUi(ui_path, self)
 
         self.thr_bars = [getattr(self, f"bar_thr{i}") for i in range(1, 9)]
         self.thr_labels = [getattr(self, f"lbl_thr{i}_value") for i in range(1, 9)]
